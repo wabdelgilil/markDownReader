@@ -1,7 +1,7 @@
 /**
  * Office Math Markup Language (OMML) Generator
  * Translates LaTeX mathematical equations into native Microsoft Word OpenXML Math structures.
- * Allows exported Word documents to display genuine, editable equations in Cambria Math.
+ * Supports matrices, brackets, powers on delimiters, chemical notation, and clean rendering in Cambria Math.
  */
 
 // Greek symbols dictionary
@@ -46,7 +46,10 @@ export class OmmlConverter {
     }
 
     try {
-      const parsedBody = this.parseExpression(cleanLatex);
+      // Pre-process chemistry \ce{...}
+      const preprocessed = this.preprocessSpecialEnvironments(cleanLatex);
+      const parsedBody = this.parseExpression(preprocessed);
+
       if (isBlock) {
         return `<m:oMathPara xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math"><m:oMath>${parsedBody}</m:oMath></m:oMathPara>`;
       }
@@ -56,6 +59,25 @@ export class OmmlConverter {
       const escaped = this.escapeXml(cleanLatex);
       return `<m:oMath xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math"><m:r><m:rPr><m:nor/></m:rPr><m:t>${escaped}</m:t></m:r></m:oMath>`;
     }
+  }
+
+  /**
+   * Handles pre-processing for chemistry \ce{...} and common shortcuts.
+   */
+  private static preprocessSpecialEnvironments(latex: string): string {
+    // 1. Chemistry: \ce{...}
+    let result = latex.replace(/\\ce\{([\s\S]*?)\}/g, (_m, chem) => {
+      // Replace -> with \rightarrow
+      let formula = chem.replace(/->/g, ' \\rightarrow ');
+      // Auto-subscript numbers following chemical elements (e.g. CO2 -> CO_2, H2O -> H_2O)
+      formula = formula.replace(/([A-Za-z\)])(\d+)/g, '$1_{$2}');
+      return formula;
+    });
+
+    // 2. Normalize simple -> to \rightarrow
+    result = result.replace(/->/g, ' \\rightarrow ');
+
+    return result;
   }
 
   /**
@@ -74,12 +96,42 @@ export class OmmlConverter {
         continue;
       }
 
-      // 1. LaTeX Command (\frac, \sqrt, \alpha, \sum, etc.)
+      // 1. LaTeX Command (\frac, \sqrt, \alpha, \sum, \begin, etc.)
       if (char === '\\') {
         const commandMatch = input.slice(i).match(/^\\([a-zA-Z]+|[,;:! ]|\\|\{|\})/);
         if (commandMatch) {
           const command = commandMatch[1];
           i += commandMatch[0].length;
+
+          // Matrix Environments: \begin{pmatrix}...\end{pmatrix}
+          if (command === 'begin') {
+            const envArg = this.extractBracedGroup(input, i);
+            i += envArg.consumedLength;
+            const envName = envArg.content.trim();
+
+            const endPattern = `\\end{${envName}}`;
+            const endIdx = input.indexOf(endPattern, i);
+            let matrixBody = '';
+            if (endIdx !== -1) {
+              matrixBody = input.slice(i, endIdx);
+              i = endIdx + endPattern.length;
+            } else {
+              matrixBody = input.slice(i);
+              i = input.length;
+            }
+
+            const matrixXml = this.renderMatrix(matrixBody);
+            if (envName === 'pmatrix') {
+              output += `<m:d><m:dPr><m:begChr m:val="("/><m:endChr m:val=")"/><m:grow/></m:dPr><m:e>${matrixXml}</m:e></m:d>`;
+            } else if (envName === 'bmatrix') {
+              output += `<m:d><m:dPr><m:begChr m:val="["/><m:endChr m:val="]"/><m:grow/></m:dPr><m:e>${matrixXml}</m:e></m:d>`;
+            } else if (envName === 'vmatrix') {
+              output += `<m:d><m:dPr><m:begChr m:val="|"/><m:endChr m:val="|"/><m:grow/></m:dPr><m:e>${matrixXml}</m:e></m:d>`;
+            } else {
+              output += matrixXml;
+            }
+            continue;
+          }
 
           // Fraction: \frac{num}{den}
           if (command === 'frac') {
@@ -119,7 +171,6 @@ export class OmmlConverter {
             let sub = '';
             let sup = '';
 
-            // Check following sub/sup
             let peekIdx = i;
             while (peekIdx < input.length) {
               const peekChar = input[peekIdx];
@@ -143,12 +194,13 @@ export class OmmlConverter {
             }
             i = peekIdx;
 
-            if (sub || sup) {
-              output += `<m:nary><m:naryPr><m:chr m:val="${opChar}"/><m:limLoc m:val="undOvr"/></m:naryPr>`;
-              output += `<m:sub>${sub ? this.parseExpression(sub) : ''}</m:sub>`;
-              output += `<m:sup>${sup ? this.parseExpression(sup) : ''}</m:sup>`;
-              output += `<m:e/>`;
-              output += `</m:nary>`;
+            // Instead of an empty <m:e/> that shows a square box □, render operator as clean sub/sup or symbol
+            if (sub && sup) {
+              output += `<m:sSubSup><m:e><m:r><m:rPr><m:nor/></m:rPr><m:t>${opChar}</m:t></m:r></m:e><m:sub>${this.parseExpression(sub)}</m:sub><m:sup>${this.parseExpression(sup)}</m:sup></m:sSubSup>`;
+            } else if (sub) {
+              output += `<m:sSub><m:e><m:r><m:rPr><m:nor/></m:rPr><m:t>${opChar}</m:t></m:r></m:e><m:sub>${this.parseExpression(sub)}</m:sub></m:sSub>`;
+            } else if (sup) {
+              output += `<m:sSup><m:e><m:r><m:rPr><m:nor/></m:rPr><m:t>${opChar}</m:t></m:r></m:e><m:sup>${this.parseExpression(sup)}</m:sup></m:sSup>`;
             } else {
               output += `<m:r><m:rPr><m:nor/></m:rPr><m:t>${opChar}</m:t></m:r>`;
             }
@@ -165,21 +217,32 @@ export class OmmlConverter {
 
           // Left/Right Delimiters: \left( ... \right)
           if (command === 'left') {
-            const delimChar = input[i] || '(';
+            let delimChar = input[i] || '(';
             i++;
-            // Find corresponding \right
+            if (delimChar === '\\' && input[i] === '{') {
+              delimChar = '{';
+              i++;
+            }
+
             const rightIdx = input.indexOf('\\right', i);
             let content = '';
             let endDelim = ')';
             if (rightIdx !== -1) {
               content = input.slice(i, rightIdx);
               i = rightIdx + 6;
+              while (i < input.length && input[i] === ' ') i++;
               endDelim = input[i] || ')';
-              i++;
+              if (endDelim === '\\' && input[i + 1] === '}') {
+                endDelim = '}';
+                i += 2;
+              } else {
+                i++;
+              }
             } else {
               content = input.slice(i);
               i = input.length;
             }
+
             output += `<m:d><m:dPr><m:begChr m:val="${this.escapeXml(delimChar)}"/><m:endChr m:val="${this.escapeXml(endDelim)}"/><m:grow/></m:dPr><m:e>${this.parseExpression(content)}</m:e></m:d>`;
             continue;
           }
@@ -236,15 +299,10 @@ export class OmmlConverter {
           }
         }
 
-        // Attach to previous output run or empty base
-        const lastRunMatch = output.match(/<m:r>[\s\S]*?<\/m:r>$/);
-        let baseElement = '';
-        if (lastRunMatch) {
-          baseElement = lastRunMatch[0];
-          output = output.slice(0, -baseElement.length);
-        } else {
-          baseElement = `<m:r><m:t></m:t></m:r>`;
-        }
+        // Robust base extraction: extracts the last complete OMML element (delimiter, fraction, radical, run, etc.)
+        const extracted = this.extractLastOmmlElement(output);
+        output = extracted.remaining;
+        const baseElement = extracted.element || `<m:r><m:t></m:t></m:r>`;
 
         if (secondArg) {
           const subContent = isSup ? secondArg.content : firstArg.content;
@@ -268,7 +326,7 @@ export class OmmlConverter {
 
       if (char === '(' || char === '[') {
         const closeChar = char === '(' ? ')' : ']';
-        const closeIdx = input.indexOf(closeChar, i + 1);
+        const closeIdx = this.findMatchingClosingBracket(input, i, char, closeChar);
         if (closeIdx !== -1) {
           const innerContent = input.slice(i + 1, closeIdx);
           output += `<m:d><m:dPr><m:begChr m:val="${char}"/><m:endChr m:val="${closeChar}"/><m:grow/></m:dPr><m:e>${this.parseExpression(innerContent)}</m:e></m:d>`;
@@ -284,7 +342,7 @@ export class OmmlConverter {
         continue;
       }
 
-      // 5. Normal character / number
+      // 5. Normal character / number / Arabic text
       output += this.createRun(char);
       i++;
     }
@@ -292,9 +350,83 @@ export class OmmlConverter {
     return output;
   }
 
+  /**
+   * Renders matrix body (rows split by \\ and cells split by &) into OMML <m:m>.
+   */
+  private static renderMatrix(matrixBody: string): string {
+    const rows = matrixBody.split('\\\\').map((r) => r.trim()).filter((r) => r.length > 0);
+    if (rows.length === 0) return '';
+
+    let matrixXml = `<m:m><m:mPr><m:mcs><m:mc><m:mcPr><m:count m:val="10"/></m:mcPr></m:mc></m:mcs></m:mPr>`;
+
+    rows.forEach((row) => {
+      matrixXml += `<m:mr>`;
+      const cols = row.split('&').map((c) => c.trim());
+      cols.forEach((col) => {
+        matrixXml += `<m:e>${this.parseExpression(col)}</m:e>`;
+      });
+      matrixXml += `</m:mr>`;
+    });
+
+    matrixXml += `</m:m>`;
+    return matrixXml;
+  }
+
+  /**
+   * Extracts the last complete OMML element from an output string so superscripts/subscripts attach correctly.
+   */
+  private static extractLastOmmlElement(output: string): { element: string; remaining: string } {
+    if (!output) return { element: '', remaining: '' };
+
+    // Matches closing tags: </m:d>, </m:r>, </m:f>, </m:rad>, </m:sSup>, </m:sSub>, </m:sSubSup>
+    const match = output.match(/<\/(m:[a-zA-Z]+)>$/);
+    if (!match) {
+      return { element: '', remaining: output };
+    }
+
+    const tagName = match[1];
+    const openTag = `<${tagName}`;
+    let depth = 0;
+    let openIdx = -1;
+
+    // Scan backwards
+    for (let pos = output.length - 1; pos >= 0; pos--) {
+      if (output.startsWith(`</${tagName}>`, pos)) {
+        depth++;
+      } else if (output.startsWith(openTag, pos)) {
+        depth--;
+        if (depth === 0) {
+          openIdx = pos;
+          break;
+        }
+      }
+    }
+
+    if (openIdx !== -1) {
+      const element = output.slice(openIdx);
+      const remaining = output.slice(0, openIdx);
+      return { element, remaining };
+    }
+
+    return { element: '', remaining: output };
+  }
+
+  private static findMatchingClosingBracket(input: string, startIdx: number, openChar: string, closeChar: string): number {
+    let depth = 1;
+    for (let i = startIdx + 1; i < input.length; i++) {
+      if (input[i] === openChar) depth++;
+      else if (input[i] === closeChar) {
+        depth--;
+        if (depth === 0) return i;
+      }
+    }
+    return -1;
+  }
+
   private static createRun(text: string, isOperator: boolean = false): string {
     const escaped = this.escapeXml(text);
-    if (isOperator || /^[0-9.,]+$/.test(text)) {
+    // If text is Arabic, digits, or operator, preserve normal font
+    if (isOperator || /^[0-9.,]+$/.test(text) || /[\u0600-\u06FF]/.test(text)) {
       return `<m:r><m:rPr><m:nor/></m:rPr><m:t>${escaped}</m:t></m:r>`;
     }
     return `<m:r><m:t>${escaped}</m:t></m:r>`;
@@ -334,7 +466,6 @@ export class OmmlConverter {
       return this.extractBracedGroup(input, i);
     }
 
-    // Single character or single command token
     if (input[i] === '\\') {
       const match = input.slice(i).match(/^\\([a-zA-Z]+|.)/);
       if (match) {
