@@ -9,12 +9,14 @@ interface DocumentViewerProps {
   document: ParsedDocument | null;
   diagrams: Map<string, string>;
   onLoadSample: () => void;
+  onFocusDiagram?: (svgHtml: string, rawCode: string) => void;
 }
 
 export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   document,
   diagrams,
   onLoadSample,
+  onFocusDiagram,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -57,6 +59,13 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     const container = target.closest('.mermaid-diagram-container');
     const svgTarget = container?.querySelector('.mermaid-target svg') as SVGElement;
     if (!svgTarget) return;
+
+    if (action === 'focus-modal') {
+      const encodedRaw = container?.getAttribute('data-diagram-code') || '';
+      const rawCode = decodeURIComponent(encodedRaw);
+      onFocusDiagram?.(svgTarget.outerHTML, rawCode);
+      return;
+    }
 
     const currentScale = parseFloat(svgTarget.getAttribute('data-scale') || '1');
 

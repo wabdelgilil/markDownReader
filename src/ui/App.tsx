@@ -4,6 +4,7 @@ import { DynamicOutline } from './components/DynamicOutline';
 import { DocumentViewer } from './components/DocumentViewer';
 import { DiagnosticsDrawer } from './components/DiagnosticsDrawer';
 import { PresentationView } from './components/PresentationView';
+import { DiagramModal } from './components/DiagramModal';
 import { ThemeService } from '../services/theme.service';
 import { documentStore } from '../services/document.store';
 import { HtmlExporterService } from '../services/exporter.service';
@@ -16,6 +17,7 @@ export const App: React.FC = () => {
   const [showPresentation, setShowPresentation] = useState(false);
   const [showDiagnostics, setShowDiagnostics] = useState(false);
   const [activeHeadingId, setActiveHeadingId] = useState<string | undefined>();
+  const [focusedDiagram, setFocusedDiagram] = useState<{ svgHtml: string; rawCode: string } | null>(null);
 
   // Initialize theme on mount
   useEffect(() => {
@@ -106,8 +108,19 @@ export const App: React.FC = () => {
           document={activeTab?.parsed || null}
           diagrams={documentStore.getActiveDiagrams()}
           onLoadSample={handleLoadSample}
+          onFocusDiagram={(svgHtml, rawCode) => setFocusedDiagram({ svgHtml, rawCode })}
         />
       </div>
+
+      {/* Fullscreen Interactive Diagram Studio Modal */}
+      {focusedDiagram && (
+        <DiagramModal
+          isOpen={true}
+          onClose={() => setFocusedDiagram(null)}
+          svgHtml={focusedDiagram.svgHtml}
+          rawCode={focusedDiagram.rawCode}
+        />
+      )}
 
       {/* Health Inspector Drawer */}
       {activeTab?.parsed && (

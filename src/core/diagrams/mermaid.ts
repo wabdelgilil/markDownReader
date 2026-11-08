@@ -106,6 +106,10 @@ export class DiagramEngine {
             <span class="font-semibold text-theme-text font-mono">Mermaid Studio</span>
           </div>
           <div class="flex items-center gap-1.5">
+            <button class="diagram-action-btn px-2.5 py-1 rounded-lg hover:bg-theme-bg border border-theme-border/60 text-purple-400 hover:text-purple-300 font-semibold transition-colors text-xs cursor-pointer flex items-center gap-1" data-action="focus-modal" title="فتح في استوديو تفاعلي منفصل بملء الشاشة">
+              <span>⛶</span>
+              <span class="hidden sm:inline">تكبير وتفاعل</span>
+            </button>
             <button class="diagram-action-btn px-2.5 py-1 rounded-lg hover:bg-theme-bg border border-theme-border/60 text-theme-text transition-colors font-mono cursor-pointer" data-action="zoom-in" title="تكبير">+</button>
             <button class="diagram-action-btn px-2.5 py-1 rounded-lg hover:bg-theme-bg border border-theme-border/60 text-theme-text transition-colors font-mono cursor-pointer" data-action="zoom-out" title="تصغير">-</button>
             <button class="diagram-action-btn px-2.5 py-1 rounded-lg hover:bg-theme-bg border border-theme-border/60 text-theme-text transition-colors font-mono cursor-pointer" data-action="reset" title="إعادة ضبط">↺</button>
