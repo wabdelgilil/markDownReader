@@ -291,15 +291,15 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 key={opt.id}
                 onClick={() => onThemeChange(opt.id)}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-all cursor-pointer ${
+                className={`flex items-center justify-center p-1.5 rounded-md text-xs font-medium transition-all cursor-pointer ${
                   currentTheme === opt.id
                     ? 'bg-theme-surface text-theme-accent shadow-xs border border-theme-border/80 font-semibold'
                     : 'text-theme-muted hover:text-theme-text'
                 }`}
                 title={opt.label}
+                aria-label={opt.label}
               >
                 {opt.icon}
-                <span className="hidden lg:inline text-[11px]">{opt.label}</span>
               </button>
             ))}
           </div>
