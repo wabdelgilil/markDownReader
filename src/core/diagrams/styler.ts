@@ -50,11 +50,11 @@ export class DiagramStyler {
       svg.insertBefore(defs, svg.firstChild);
     }
 
-    const shadowOpacity = isLight || isSepia ? '0.12' : '0.35';
+    const shadowOpacity = isLight || isSepia ? '0.08' : '0.4';
     const shadowColor = '#000000';
 
-    const procGradStart = isLight ? '#ffffff' : isSepia ? '#fef3c7' : '#1e293b';
-    const procGradEnd = isLight ? '#f1f5f9' : isSepia ? '#fde68a' : '#0f172a';
+    const procGradStart = isLight ? '#ffffff' : isSepia ? '#f0ead9' : '#18181b';
+    const procGradEnd = isLight ? '#f4f4f5' : isSepia ? '#e9e1cd' : '#111113';
 
     const defsContent = `
       <!-- Ambient Drop Shadow Filter -->
@@ -125,10 +125,10 @@ export class DiagramStyler {
           rect.setAttribute('rx', '10');
           rect.setAttribute('ry', '10');
           rect.style.fill = 'url(#visio-process-grad)';
-          rect.style.stroke = isLight ? '#2563eb' : isSepia ? '#92400e' : '#3b82f6';
+          rect.style.stroke = isLight ? '#4f46e5' : isSepia ? '#9a4316' : '#6366f1';
           rect.style.strokeWidth = '1.75px';
           rect.setAttribute('filter', 'url(#visio-shadow)');
-          if (text) (text as SVGElement).style.fill = isLight ? '#0f172a' : isSepia ? '#433422' : '#f8fafc';
+          if (text) (text as SVGElement).style.fill = isLight ? '#18181b' : isSepia ? '#2c2217' : '#f4f4f5';
         }
       } else if (polygon) {
         // Visio Decision Diamond
@@ -157,9 +157,9 @@ export class DiagramStyler {
    * Sequence Diagrams -> High-Contrast Architecture Fidelity
    */
   private static enhanceSequence(svg: SVGSVGElement, isLight: boolean, isSepia: boolean): void {
-    const textColor = isLight ? '#0f172a' : isSepia ? '#433422' : '#f8fafc';
-    const accentColor = isLight ? '#2563eb' : isSepia ? '#92400e' : '#3b82f6';
-    const borderColor = isLight ? '#cbd5e1' : isSepia ? '#dfcaa2' : '#334155';
+    const textColor = isLight ? '#18181b' : isSepia ? '#2c2217' : '#f4f4f5';
+    const accentColor = isLight ? '#4f46e5' : isSepia ? '#9a4316' : '#6366f1';
+    const borderColor = isLight ? '#e4e4e7' : isSepia ? '#ded5c2' : '#27272a';
 
     // 1. Message texts between lifelines
     const messageTexts = svg.querySelectorAll<SVGTextElement>('.messageText');
@@ -245,12 +245,12 @@ export class DiagramStyler {
   private static enhanceMindmap(svg: SVGSVGElement, _isLight: boolean, _isSepia: boolean): void {
     const mindmapNodes = svg.querySelectorAll('.mindmap-node');
     const branchColors = [
-      { fill: '#059669', stroke: '#34d399' }, // Emerald
-      { fill: '#7c3aed', stroke: '#a78bfa' }, // Purple
+      { fill: '#4f46e5', stroke: '#818cf8' }, // Indigo
+      { fill: '#0d9488', stroke: '#2dd4bf' }, // Teal
       { fill: '#d97706', stroke: '#fbbf24' }, // Amber
-      { fill: '#0891b2', stroke: '#22d3ee' }, // Cyan
+      { fill: '#7c3aed', stroke: '#c084fc' }, // Violet
+      { fill: '#0284c7', stroke: '#38bdf8' }, // Sky
       { fill: '#e11d48', stroke: '#fb7185' }, // Rose
-      { fill: '#2563eb', stroke: '#60a5fa' }, // Blue
     ];
 
     let colorIndex = 0;
@@ -299,9 +299,9 @@ export class DiagramStyler {
    * Gantt -> Microsoft Project Executive Timeline
    */
   private static enhanceGantt(svg: SVGSVGElement, isLight: boolean, isSepia: boolean): void {
-    const textColor = isLight ? '#0f172a' : isSepia ? '#433422' : '#f8fafc';
-    const mutedColor = isLight ? '#64748b' : isSepia ? '#7d6b53' : '#94a3b8';
-    const gridColor = isLight ? '#e2e8f0' : isSepia ? '#dfcaa2' : '#334155';
+    const textColor = isLight ? '#18181b' : isSepia ? '#2c2217' : '#f4f4f5';
+    const mutedColor = isLight ? '#71717a' : isSepia ? '#786b59' : '#a1a1aa';
+    const gridColor = isLight ? '#e4e4e7' : isSepia ? '#ded5c2' : '#27272a';
 
     // Project Title
     const title = svg.querySelector('.titleText');
@@ -356,7 +356,7 @@ export class DiagramStyler {
    * Git Graph -> Clean GitHub Tree with Mathematical Anti-Collision Staggering
    */
   private static enhanceGitGraph(svg: SVGSVGElement, isLight: boolean, isSepia: boolean): void {
-    const textColor = isLight ? '#0f172a' : isSepia ? '#433422' : '#f8fafc';
+    const textColor = isLight ? '#18181b' : isSepia ? '#2c2217' : '#f4f4f5';
 
     // 1. Remove opaque grey boxes behind commit labels
     const commitLabelBkgs = svg.querySelectorAll('.commit-label-bkg');

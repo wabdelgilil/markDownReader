@@ -180,8 +180,8 @@ export class DiagramDispatcher {
       : 'dark') || 'dark';
     const isLight = currentTheme === 'light';
     const isSepia = currentTheme === 'sepia';
-    const legendColor = isLight ? '#334155' : isSepia ? '#57534e' : '#94a3b8';
-    const tooltipBg = isLight ? '#0f172a' : '#020617';
+    const legendColor = isLight ? '#18181b' : isSepia ? '#2c2217' : '#f4f4f5';
+    const tooltipBg = isLight ? '#18181b' : isSepia ? '#211c18' : '#09090b';
 
     container.innerHTML = `
       <div class="w-full max-w-lg mx-auto p-4 flex flex-col items-center justify-center select-none" dir="ltr" style="direction: ltr !important;">
@@ -203,12 +203,12 @@ export class DiagramDispatcher {
           {
             data: values,
             backgroundColor: [
-              '#3b82f6', // Electric Blue
-              '#8b5cf6', // Violet
-              '#10b981', // Emerald
-              '#f59e0b', // Amber
-              '#ec4899', // Pink
-              '#06b6d4', // Cyan
+              '#4f46e5', // Iris Indigo
+              '#0d9488', // Teal
+              '#d97706', // Amber
+              '#7c3aed', // Violet
+              '#0284c7', // Sky
+              '#e11d48', // Rose
             ],
             borderColor: isLight ? '#ffffff' : 'rgba(255, 255, 255, 0.1)',
             borderWidth: 2,

@@ -16,8 +16,8 @@ export class DiagramEngine {
     const isTerminal = currentTheme === 'terminal';
     const isDark = !isLight && !isSepia;
 
-    const textColor = isTerminal ? '#00ff66' : isLight ? '#0f172a' : isSepia ? '#433422' : '#f8fafc';
-    const lineColor = isTerminal ? '#00aa44' : isLight ? '#475569' : isSepia ? '#7d6b53' : '#94a3b8';
+    const textColor = isTerminal ? '#00ff66' : isLight ? '#18181b' : isSepia ? '#2c2217' : '#f4f4f5';
+    const lineColor = isTerminal ? '#00aa44' : isLight ? '#71717a' : isSepia ? '#786b59' : '#a1a1aa';
 
     mermaid.initialize({
       startOnLoad: false,
@@ -28,58 +28,58 @@ export class DiagramEngine {
       themeVariables: {
         darkMode: isDark,
         background: 'transparent',
-        primaryColor: isLight ? '#2563eb' : isSepia ? '#92400e' : '#3b82f6',
+        primaryColor: isLight ? '#4f46e5' : isSepia ? '#9a4316' : '#6366f1',
         primaryTextColor: '#ffffff', // For inside colored shapes/buttons
         textColor: textColor,        // For floating labels, notes, message lines
         lineColor: lineColor,
-        secondaryColor: '#8b5cf6',
-        tertiaryColor: '#10b981',
+        secondaryColor: '#0d9488',
+        tertiaryColor: '#d97706',
 
         // Sequence Diagram specific variables
         actorTextColor: '#ffffff',
-        actorLineColor: isLight ? '#cbd5e1' : '#334155',
+        actorLineColor: isLight ? '#e4e4e7' : isSepia ? '#ded5c2' : '#27272a',
         signalColor: textColor,
         signalTextColor: textColor,
-        labelBoxBkgColor: isLight ? '#f1f5f9' : '#1e293b',
-        labelBoxBorderColor: isLight ? '#cbd5e1' : '#475569',
+        labelBoxBkgColor: isLight ? '#ffffff' : isSepia ? '#f0ead9' : '#18181b',
+        labelBoxBorderColor: isLight ? '#e4e4e7' : isSepia ? '#ded5c2' : '#27272a',
         labelTextColor: textColor,
         loopTextColor: textColor,
         noteTextColor: textColor,
 
         // Git Graph styling
-        git0: '#38bdf8',
-        git1: '#a855f7',
-        git2: '#10b981',
-        git3: '#f59e0b',
-        git4: '#f43f5e',
-        gitBranchLabel0: '#0284c7',
-        gitBranchLabel1: '#7c3aed',
-        gitBranchLabel2: '#059669',
-        gitBranchLabel3: '#d97706',
-        gitBranchLabel4: '#e11d48',
+        git0: '#6366f1',
+        git1: '#0d9488',
+        git2: '#d97706',
+        git3: '#7c3aed',
+        git4: '#e11d48',
+        gitBranchLabel0: '#4f46e5',
+        gitBranchLabel1: '#0f766e',
+        gitBranchLabel2: '#b45309',
+        gitBranchLabel3: '#6d28d9',
+        gitBranchLabel4: '#be123c',
         tagLabelColor: '#ffffff',
-        tagLabelBackground: '#6366f1',
-        tagLabelBorder: '#4f46e5',
+        tagLabelBackground: '#4f46e5',
+        tagLabelBorder: '#4338ca',
         commitLabelColor: textColor,
         commitLabelBackground: 'transparent',
 
         // Gantt Chart styling
-        sectionBkgColor: isLight ? '#f1f5f9' : '#1e293b40',
-        altSectionBkgColor: isLight ? '#ffffff' : '#0f172a40',
-        taskBkgColor: '#2563eb',
-        taskBorderColor: '#3b82f6',
+        sectionBkgColor: isLight ? '#f4f4f5' : isSepia ? '#f0ead9' : '#121215',
+        altSectionBkgColor: isLight ? '#ffffff' : isSepia ? '#f7f3e9' : '#09090b',
+        taskBkgColor: isLight ? '#4f46e5' : isSepia ? '#9a4316' : '#6366f1',
+        taskBorderColor: isLight ? '#4338ca' : isSepia ? '#7c3412' : '#818cf8',
         taskTextColor: '#ffffff',
         taskTextOutsideColor: textColor,
-        activeTaskBkgColor: '#059669',
-        activeTaskBorderColor: '#10b981',
+        activeTaskBkgColor: '#0d9488',
+        activeTaskBorderColor: '#14b8a6',
         activeTaskTextColor: '#ffffff',
-        doneTaskBkgColor: '#475569',
-        doneTaskBorderColor: '#64748b',
-        doneTaskTextColor: '#f8fafc',
+        doneTaskBkgColor: '#71717a',
+        doneTaskBorderColor: '#a1a1aa',
+        doneTaskTextColor: '#f4f4f5',
         critBkgColor: '#e11d48',
-        critBorderColor: '#f43f5e',
-        todayLineColor: '#ef4444',
-        gridColor: isLight ? '#e2e8f0' : '#334155',
+        critBorderColor: '#fb7185',
+        todayLineColor: '#e11d48',
+        gridColor: isLight ? '#e4e4e7' : isSepia ? '#ded5c2' : '#27272a',
         titleColor: textColor,
       },
       flowchart: {

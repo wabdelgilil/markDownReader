@@ -90,14 +90,14 @@ export const DynamicOutline: React.FC<DynamicOutlineProps> = ({
               onClick={() => onSelectHeading(heading.id)}
               className={`flex items-center justify-between text-right py-1.5 px-2.5 rounded-lg transition-all text-xs truncate group cursor-pointer ${indentClass} ${
                 isActive
-                  ? 'bg-theme-accent text-white font-medium shadow-xs shadow-theme-accent/30'
-                  : 'hover:bg-theme-surface hover:text-theme-text text-theme-muted'
+                  ? 'bg-theme-accent/12 text-theme-accent font-semibold border-r-2 border-theme-accent'
+                  : 'hover:bg-theme-bg/80 hover:text-theme-text text-theme-muted'
               }`}
               title={heading.text}
             >
               <span className="truncate">{heading.text}</span>
               {isActive && (
-                <ChevronLeft className="w-3.5 h-3.5 shrink-0 text-white mr-1 animate-pulse" />
+                <ChevronLeft className="w-3.5 h-3.5 shrink-0 text-theme-accent mr-1" />
               )}
             </button>
           );

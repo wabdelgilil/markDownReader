@@ -4,47 +4,47 @@
 
 :root,
 [data-theme="light"] {
-  --color-bg: #f8fafc;
+  --color-bg: #fafafa;
   --color-surface: #ffffff;
-  --color-border: #e2e8f0;
-  --color-text: #0f172a;
-  --color-muted: #64748b;
-  --color-accent: #2563eb;
-  --color-accent-hover: #1d4ed8;
-  --color-code-bg: #f1f5f9;
+  --color-border: #e4e4e7;
+  --color-text: #18181b;
+  --color-muted: #71717a;
+  --color-accent: #4f46e5;
+  --color-accent-hover: #4338ca;
+  --color-code-bg: #18181b;
 }
 
 [data-theme="dark"] {
-  --color-bg: #090d16;
-  --color-surface: #111827;
-  --color-border: #1f2937;
-  --color-text: #f9fafb;
-  --color-muted: #9ca3af;
-  --color-accent: #3b82f6;
-  --color-accent-hover: #60a5fa;
-  --color-code-bg: #1e293b;
+  --color-bg: #09090b;
+  --color-surface: #121215;
+  --color-border: #27272a;
+  --color-text: #f4f4f5;
+  --color-muted: #a1a1aa;
+  --color-accent: #6366f1;
+  --color-accent-hover: #818cf8;
+  --color-code-bg: #0d0d10;
 }
 
 [data-theme="sepia"] {
-  --color-bg: #fbf0d9;
-  --color-surface: #f4e4c1;
-  --color-border: #dfcaa2;
-  --color-text: #433422;
-  --color-muted: #7d6b53;
-  --color-accent: #92400e;
-  --color-accent-hover: #78350f;
-  --color-code-bg: #ede0bc;
+  --color-bg: #f7f3e9;
+  --color-surface: #f0ead9;
+  --color-border: #ded5c2;
+  --color-text: #2c2217;
+  --color-muted: #786b59;
+  --color-accent: #9a4316;
+  --color-accent-hover: #7c3412;
+  --color-code-bg: #211c18;
 }
 
 [data-theme="terminal"] {
   --color-bg: #050505;
-  --color-surface: #0d1117;
+  --color-surface: #0a0d0a;
   --color-border: #00ff6633;
   --color-text: #00ff66;
   --color-muted: #00aa44;
   --color-accent: #00ff66;
   --color-accent-hover: #33ff88;
-  --color-code-bg: #0a100d;
+  --color-code-bg: #040805;
 }
 
 /* Base typography & scrollbar */
@@ -340,19 +340,19 @@ article input[type="checkbox"] {
   opacity: 0 !important;
 }
 [data-theme="light"] .mermaid-target .commit-label text {
-  fill: #0f172a !important;
+  fill: #18181b !important;
   text-shadow: none !important;
   font-size: 11px !important;
   font-weight: 600 !important;
 }
 [data-theme="sepia"] .mermaid-target .commit-label text {
-  fill: #433422 !important;
+  fill: #2c2217 !important;
   text-shadow: none !important;
   font-size: 11px !important;
   font-weight: 600 !important;
 }
 [data-theme="dark"] .mermaid-target .commit-label text {
-  fill: #f8fafc !important;
+  fill: #f4f4f5 !important;
   font-size: 11px !important;
   font-weight: 600 !important;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.95)) !important;
@@ -384,7 +384,7 @@ article input[type="checkbox"] {
   fill: #4f46e5 !important;
   stroke: #818cf8 !important;
   stroke-width: 3px !important;
-  filter: drop-shadow(0 4px 16px rgba(99, 102, 241, 0.45)) !important;
+  filter: drop-shadow(0 4px 16px rgba(79, 70, 229, 0.45)) !important;
 }
 .mermaid-target .mindmap-node text {
   fill: #ffffff !important;
@@ -395,26 +395,26 @@ article input[type="checkbox"] {
   rx: 14px !important;
   ry: 14px !important;
   stroke-width: 2px !important;
-  filter: drop-shadow(0 3px 10px rgba(0, 0, 0, 0.4)) !important;
+  filter: drop-shadow(0 3px 10px rgba(0, 0, 0, 0.3)) !important;
 }
 
-/* Branch palette mapping for Mindmap */
+/* Harmonized Branch palette mapping for Mindmap */
 .mermaid-target .mindmap-node.section-0 rect,
 .mermaid-target .mindmap-node.section-root + g .section-0 rect {
-  fill: #059669 !important;
-  stroke: #34d399 !important;
+  fill: #4f46e5 !important;
+  stroke: #818cf8 !important;
 }
 .mermaid-target .mindmap-node.section-1 rect {
-  fill: #7c3aed !important;
-  stroke: #a78bfa !important;
+  fill: #0d9488 !important;
+  stroke: #2dd4bf !important;
 }
 .mermaid-target .mindmap-node.section-2 rect {
   fill: #d97706 !important;
   stroke: #fbbf24 !important;
 }
 .mermaid-target .mindmap-node.section-3 rect {
-  fill: #0891b2 !important;
-  stroke: #22d3ee !important;
+  fill: #7c3aed !important;
+  stroke: #c084fc !important;
 }
 .mermaid-target .mindmap-node.section-4 rect {
   fill: #e11d48 !important;
@@ -447,19 +447,19 @@ article input[type="checkbox"] {
 .mermaid-target rect.task {
   rx: 6px !important;
   ry: 6px !important;
-  fill: #2563eb !important;
-  stroke: #60a5fa !important;
+  fill: #4f46e5 !important;
+  stroke: #818cf8 !important;
   stroke-width: 1.5px !important;
 }
 .mermaid-target rect.task.active0,
 .mermaid-target rect.task.active1 {
-  fill: #059669 !important;
-  stroke: #34d399 !important;
+  fill: #0d9488 !important;
+  stroke: #2dd4bf !important;
 }
 .mermaid-target rect.task.done0,
 .mermaid-target rect.task.done1 {
-  fill: #475569 !important;
-  stroke: #64748b !important;
+  fill: #71717a !important;
+  stroke: #a1a1aa !important;
 }
 .mermaid-target rect.task.crit0,
 .mermaid-target rect.task.crit1 {

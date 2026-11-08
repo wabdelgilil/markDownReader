@@ -120,9 +120,9 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 key={opt.id}
                 onClick={() => onThemeChange(opt.id)}
-                className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-colors ${
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
                   currentTheme === opt.id
-                    ? 'bg-theme-accent text-white shadow-sm'
+                    ? 'bg-theme-surface text-theme-accent shadow-xs border border-theme-border/80 font-semibold'
                     : 'text-theme-muted hover:text-theme-text'
                 }`}
                 title={opt.label}
