@@ -1,18 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { DocumentHeading } from '../../core/types';
-import { ListTree, ChevronLeft, ChevronRight, Search, X } from 'lucide-react';
+import { ListTree, ChevronLeft, ChevronRight, Search, X, PanelLeftClose } from 'lucide-react';
 import { useI18n } from '../hooks/useI18n';
 
 interface DynamicOutlineProps {
   headings: DocumentHeading[];
   activeHeadingId?: string;
   onSelectHeading: (id: string) => void;
+  onClose?: () => void;
 }
 
 export const DynamicOutline: React.FC<DynamicOutlineProps> = ({
   headings,
   activeHeadingId,
   onSelectHeading,
+  onClose,
 }) => {
   const { t, locale } = useI18n();
   const [filterText, setFilterText] = useState('');
@@ -31,10 +33,21 @@ export const DynamicOutline: React.FC<DynamicOutlineProps> = ({
 
   if (headings.length === 0) {
     return (
-      <aside className={`w-72 ${locale === 'ar' ? 'border-l' : 'border-r'} border-theme-border bg-theme-surface/50 p-4 hidden lg:flex flex-col text-xs text-theme-muted shrink-0 h-full`}>
-        <div className="flex items-center gap-1.5 font-semibold text-theme-text mb-3">
-          <ListTree className="w-4 h-4 text-theme-accent" />
-          <span>{t.outline.title}</span>
+      <aside className={`w-72 ${locale === 'ar' ? 'border-l' : 'border-r'} border-theme-border bg-theme-surface/50 p-4 flex flex-col text-xs text-theme-muted shrink-0 h-full animate-in fade-in duration-150`}>
+        <div className="flex items-center justify-between font-semibold text-theme-text mb-3">
+          <div className="flex items-center gap-1.5">
+            <ListTree className="w-4 h-4 text-theme-accent" />
+            <span>{t.outline.title}</span>
+          </div>
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="p-1 rounded-md text-theme-muted hover:text-theme-text hover:bg-theme-border/60 transition-colors cursor-pointer"
+              title={t.outline.collapse}
+            >
+              <PanelLeftClose className={`w-3.5 h-3.5 ${locale === 'ar' ? 'rotate-180' : ''}`} />
+            </button>
+          )}
         </div>
         <div className="py-8 text-center opacity-60">{t.outline.emptyText}</div>
       </aside>
@@ -42,17 +55,26 @@ export const DynamicOutline: React.FC<DynamicOutlineProps> = ({
   }
 
   return (
-    <aside className={`w-72 ${locale === 'ar' ? 'border-l' : 'border-r'} border-theme-border bg-theme-surface/60 backdrop-blur-xs hidden lg:flex flex-col shrink-0 select-none h-full z-10`}>
-      {/* Header with Title and Count */}
+    <aside className={`w-72 ${locale === 'ar' ? 'border-l' : 'border-r'} border-theme-border bg-theme-surface/60 backdrop-blur-xs flex flex-col shrink-0 select-none h-full z-10 animate-in fade-in duration-150`}>
+      {/* Header with Title, Count, and Collapse Action */}
       <div className="p-3 border-b border-theme-border/60 bg-theme-bg/40">
         <div className="flex items-center justify-between font-semibold text-xs text-theme-text mb-2.5">
           <div className="flex items-center gap-2">
             <ListTree className="w-4 h-4 text-theme-accent" />
             <span>{t.outline.title}</span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-theme-surface text-theme-muted border border-theme-border/60 font-mono">
+              {headings.length}
+            </span>
           </div>
-          <span className="text-[10px] px-1.5 py-0.5 rounded bg-theme-surface text-theme-muted border border-theme-border/60 font-mono">
-            {headings.length}
-          </span>
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="p-1 rounded-md text-theme-muted hover:text-theme-text hover:bg-theme-border/60 transition-colors cursor-pointer"
+              title={t.outline.collapse}
+            >
+              <PanelLeftClose className={`w-3.5 h-3.5 ${locale === 'ar' ? 'rotate-180' : ''}`} />
+            </button>
+          )}
         </div>
 
         {/* Quick Search Filter */}

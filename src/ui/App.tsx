@@ -15,6 +15,7 @@ import { documentStore } from '../services/document.store';
 import { ExportDispatcher, ExportFormat } from '../services/exporters';
 import { SAMPLE_MARKDOWN } from '../core/sample';
 import { ReadingTheme } from '../core/types';
+import { ListTree } from 'lucide-react';
 
 export const App: React.FC = () => {
   const [theme, setTheme] = useState<ReadingTheme>('dark');
@@ -23,6 +24,13 @@ export const App: React.FC = () => {
   const [showDiagnostics, setShowDiagnostics] = useState(false);
   const [showDiagramThemes, setShowDiagramThemes] = useState(false);
   const [showWorkspaceTree, setShowWorkspaceTree] = useState(false);
+  const [showOutline, setShowOutline] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('markdown_reader_show_outline') !== 'false';
+    } catch {
+      return true;
+    }
+  });
   const [diagramStyleVersion, setDiagramStyleVersion] = useState(0);
   const [activeHeadingId, setActiveHeadingId] = useState<string | undefined>();
   const [focusedDiagram, setFocusedDiagram] = useState<{ svgHtml: string; rawCode: string } | null>(null);
@@ -42,12 +50,27 @@ export const App: React.FC = () => {
     return unsubscribe;
   }, []);
 
+  const handleToggleOutline = () => {
+    setShowOutline((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem('markdown_reader_show_outline', String(next));
+      } catch {
+        // Fallback for isolated storage contexts
+      }
+      return next;
+    });
+  };
+
   // Global Keyboard Shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'f') {
         e.preventDefault();
         FullscreenService.toggleFullscreen();
+      } else if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === 'b' || (e.shiftKey && e.key.toLowerCase() === 'o'))) {
+        e.preventDefault();
+        handleToggleOutline();
       } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'w') {
         e.preventDefault();
         if (activeTab) {
@@ -133,24 +156,43 @@ export const App: React.FC = () => {
         onExportFormat={handleExportFormat}
         onOpenDiagramThemes={() => setShowDiagramThemes(true)}
         onToggleWorkspace={() => setShowWorkspaceTree((prev) => !prev)}
+        onToggleOutline={handleToggleOutline}
         hasOpenTabs={activeTab !== null}
         hasOpenWorkspace={showWorkspaceTree}
+        hasOpenOutline={showOutline}
+        headingsCount={activeTab?.parsed?.headings.length}
       />
 
       {/* Main Workspace Body */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden relative">
         {/* Workspace Directory Tree Explorer */}
         {showWorkspaceTree && (
           <WorkspaceTree onClose={() => setShowWorkspaceTree(false)} />
         )}
 
         {/* Dynamic Table of Contents (Outline) */}
-        {activeTab?.parsed && (
+        {showOutline && activeTab?.parsed && (
           <DynamicOutline
             headings={activeTab.parsed.headings}
             activeHeadingId={activeHeadingId}
             onSelectHeading={handleSelectHeading}
+            onClose={() => setShowOutline(false)}
           />
+        )}
+
+        {/* Floating Quick-Expand Edge Trigger */}
+        {!showOutline && activeTab?.parsed && activeTab.parsed.headings.length > 0 && (
+          <button
+            onClick={handleToggleOutline}
+            className={`absolute top-3 ${I18nService.getLocale() === 'ar' ? 'right-3' : 'left-3'} z-20 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-theme-surface/90 hover:bg-theme-surface border border-theme-border shadow-md backdrop-blur-xs text-xs font-medium text-theme-text hover:text-theme-accent transition-all cursor-pointer`}
+            title={`${I18nService.getLocale() === 'ar' ? 'إظهار فهرس المحتويات' : 'Show Table of Contents'} (Ctrl+B)`}
+          >
+            <ListTree className="w-3.5 h-3.5 text-theme-accent" />
+            <span className="hidden sm:inline text-[11px]">{I18nService.getLocale() === 'ar' ? 'الفهرس' : 'Outline'}</span>
+            <span className="text-[10px] px-1 rounded bg-theme-bg text-theme-muted font-mono border border-theme-border/60">
+              {activeTab.parsed.headings.length}
+            </span>
+          </button>
         )}
 
         {/* Central Markdown Render View */}

@@ -16,6 +16,8 @@ export interface TranslationDictionary {
     exportHtmlTooltip: string;
     diagramThemes: string;
     diagramThemesTooltip: string;
+    toggleOutline: string;
+    toggleOutlineTooltip: string;
     themes: {
       light: string;
       dark: string;
@@ -28,6 +30,8 @@ export interface TranslationDictionary {
     title: string;
     searchPlaceholder: string;
     emptyText: string;
+    collapse: string;
+    expand: string;
   };
   viewer: {
     emptyTitle: string;
@@ -126,6 +130,8 @@ const translations: Record<AppLocale, TranslationDictionary> = {
       exportHtmlTooltip: 'تصدير ملف HTML مستقل متكامل',
       diagramThemes: 'هوية المخططات',
       diagramThemesTooltip: 'تخصيص أنماط وألوان المخططات',
+      toggleOutline: 'فهرس المحتويات',
+      toggleOutlineTooltip: 'إظهار / إخفاء فهرس المحتويات (Ctrl+B)',
       themes: {
         light: 'فاتح',
         dark: 'داكن',
@@ -138,6 +144,8 @@ const translations: Record<AppLocale, TranslationDictionary> = {
       title: 'فهرس المحتويات',
       searchPlaceholder: 'بحث في الفهرس...',
       emptyText: 'لا توجد عناوين في هذا المستند.',
+      collapse: 'إخفاء فهرس المحتويات',
+      expand: 'إظهار فهرس المحتويات',
     },
     viewer: {
       emptyTitle: 'لا يوجد مستند مفتوح حالياً',
@@ -246,6 +254,8 @@ const translations: Record<AppLocale, TranslationDictionary> = {
       exportHtmlTooltip: 'Export Self-Contained HTML File',
       diagramThemes: 'Diagram Styles',
       diagramThemesTooltip: 'Customize Diagram Styles & Color Palettes',
+      toggleOutline: 'Table of Contents',
+      toggleOutlineTooltip: 'Toggle Table of Contents (Ctrl+B)',
       themes: {
         light: 'Light',
         dark: 'Dark',
@@ -258,6 +268,8 @@ const translations: Record<AppLocale, TranslationDictionary> = {
       title: 'Table of Contents',
       searchPlaceholder: 'Search in outline...',
       emptyText: 'No headings found in this document.',
+      collapse: 'Hide Table of Contents',
+      expand: 'Show Table of Contents',
     },
     viewer: {
       emptyTitle: 'No Document Currently Open',
