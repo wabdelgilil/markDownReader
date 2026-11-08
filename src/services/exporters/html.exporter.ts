@@ -15,7 +15,7 @@ export class HtmlExporter extends BaseExporter implements IExporter {
   public async export(doc: ParsedDocument, options: ExportOptions): Promise<void> {
     const theme = options.theme || 'dark';
     const filename = this.resolveFilename(options, this.fileExtension);
-    const title = doc.metadata.title || 'MarkDownReader Document';
+    const title = doc.metadata.title || 'MDFull Document';
 
     // Inject SVG diagrams into their respective placeholders
     let renderedHtml = doc.html;

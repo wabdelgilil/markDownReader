@@ -1,5 +1,5 @@
 ---
-title: الدليل الاستعراضي الشامل ومختبر إمكانات MarkDownReader
+title: الدليل الاستعراضي الشامل ومختبر إمكانات MDFull
 author: الفريق الهندسي لتطوير محطات التوثيق
 date: 2026-11-08
 version: 1.0.0
@@ -7,7 +7,7 @@ tags: [Markdown, MathJax, KaTeX, Mermaid, RTL, BiDi, Benchmark]
 status: معتمد للإنتاج والعروض الترويجية
 ---
 
-# محطة MarkDownReader: المختبر التقني والاستعراضي الشامل 🚀
+# محطة MDFull: المختبر التقني والاستعراضي الشامل 🚀
 
 مرحباً بك في الوثيقة المرجعية الشاملة المصممة لاختبار واستعراض **كافة إمكانات لغة التوصيف الماركداون (Markdown)** دون أي استثناء. تجمع هذه الوثيقة بين **النصوص ثنائية الاتجاه (العربية والإنجليزية)**، و**المعادلات الرياضية والكيميائية المتقدمة**، و**المخططات البيانية التفاعلية الكاملة**، و**الجداول المعيارية**، و**التنبيهات الرسمية**.
 
@@ -18,14 +18,14 @@ status: معتمد للإنتاج والعروض الترويجية
 
 ## 1. التناغم الذكي بين اللغتين العربية والإنجليزية في مستند واحد (Bilingual Coexistence & BiDi Showcase) 🌐
 
-تتميز محطة **MarkDownReader** بقدرة استثنائية على إدارة المستندات التقنية الهجينة التي تحتوي على نصوص عربية وأجنبية جنباً إلى جنب، مع منح كل لغة خصائصها الطبيعية الكاملة (الاتجاه، الخط، المحاذاة، وعزل علامات الترقيم):
+تتميز محطة **MDFull** بقدرة استثنائية على إدارة المستندات التقنية الهجينة التي تحتوي على نصوص عربية وأجنبية جنباً إلى جنب، مع منح كل لغة خصائصها الطبيعية الكاملة (الاتجاه، الخط، المحاذاة، وعزل علامات الترقيم):
 
 ### أ. انسيابية اللغة العربية مع عزل الأكواد اللاتينية المضمنة (Arabic RTL with Inline LTR Code):
 عند قراءة توثيق تقني باللغة العربية، كثيراً ما تتداخل أوامر برمجية مثل `git checkout -b feature/auth-system` أو دوال مثل `documentStore.openTab(fileName, filePath, fileContent)` داخل سياق الجملة. في المحررات التقليدية، تنقلب الأقواس وتنتقل النقطة الختامية لبداية السطر مسببة تشوهاً بصرياً حاداً.
 
 هنا، يضمن محرك **BiDi Arbitrator** بقاء الفقرة من اليمين لليسار، مع استقرار الترقيم في مكانه الطبيعي تماماً:
 * عند استدعاء الدالة `authProvider.verifySession({ token: "Bearer eyJhbGci...", timeoutMs: 5000 })`، يعيد الخادم كائن `Promise<UserSession>` مباشرة.
-* مسار الملف في نظام التشغيل هو `C:\Users\Engineering\Workspace\markDownReader\src\main.tsx` وتتم قراءته بسلاسة دون ارتباك الفواصل المائلة.
+* مسار الملف في نظام التشغيل هو `C:\Users\Engineering\Workspace\MDFull\src\main.tsx` وتتم قراءته بسلاسة دون ارتباك الفواصل المائلة.
 * المتغيرات البيئية مثل `VITE_API_ENDPOINT="https://api.enterprise.sa/v1"` تظهر بدقة هندسية متناهية.
 
 > [!NOTE]
@@ -46,7 +46,7 @@ Key architectural components include:
 
 ```json
 {
-  "system": "MarkDownReader",
+  "system": "MDFull",
   "engine": "AST-Unified-Stream",
   "bilingualSupport": {
     "arabicRTL": true,
@@ -68,7 +68,7 @@ Key architectural components include:
 
 ### ج. جدول المقارنة الثنائي بين اللغات (Bilingual Feature Matrix):
 
-| الخاصية التقنية (Feature) | المعالجة التقليدية (Standard Editors) | معالجة MarkDownReader الذكية |
+| الخاصية التقنية (Feature) | المعالجة التقليدية (Standard Editors) | معالجة MDFull الذكية |
 | :--- | :--- | :--- |
 | **Arabic Block Flow** | Mixed RTL/LTR confusion with broken commas | **Native RTL with Readex Pro Arabic** |
 | **English Technical Sections** | Forced into right-alignment awkwardly | **Clean Autonomous LTR Alignment** |
@@ -247,7 +247,7 @@ gitGraph
 ### هـ. الخريطة الذهنية المعمارية (Mindmap):
 ```mermaid
 mindmap
-  root((محطة MarkDownReader))
+  root((محطة MDFull))
     المعمارية الأساسية
       محرك AST نقي
       محول BiDi
@@ -285,7 +285,7 @@ gantt
 
 ## 4. جداول المقارنة الفنية ومعايير الأداء (Benchmarking Tables) 📊
 
-| المؤشر التقني | برامج الإلكترون (Obsidian / MarkText) | محررات الويب التقليدية | محطة MarkDownReader الفائقة |
+| المؤشر التقني | برامج الإلكترون (Obsidian / MarkText) | محررات الويب التقليدية | محطة MDFull الفائقة |
 | :--- | :---: | :---: | :---: |
 | **استهلاك الذاكرة (RAM Idle)** | 250MB - 450MB | 180MB - 300MB | **35MB - 55MB فقط** |
 | **حجم الملف التنفيذي** | 120MB - 200MB | غير متاح أوفلاين | **أقل من 20MB** |

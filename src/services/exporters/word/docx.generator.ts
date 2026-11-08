@@ -4,40 +4,30 @@ import { ExportOptions } from '../types';
 import { OmmlConverter } from './omml';
 import { WordDiagramShapeEngine } from './diagram.shapes';
 import { OpenXmlTemplates } from './openxml.templates';
-import { DocxTableBuilder } from './table.builder';
+import { TableBuilder } from './table.builder';
 
 /**
  * Enterprise OpenXML DOCX Document Generator
  * Constructs fully compliant Microsoft Word documents with:
  * - Native OMML mathematical equations (editable in Word Equation Tools)
- * - Native Word drawing shapes / blocks for diagrams (editable VML shapes)
+ * - Native Word drawing shapes / blocks for diagrams (editable VML blocks)
  * - Complete RTL Arabic bidirectional paragraph and table typography
- * - Formatted tables, code blocks, lists, blockquotes, and heading outlines
+ * - Clean callout alert boxes, shaded code cards, and outline headings without markdown artifacts
  */
 export class DocxGenerator {
   public static async generate(doc: ParsedDocument, options: ExportOptions): Promise<Blob> {
     const isRtl = options.locale !== 'en';
     const zip = new JSZip();
 
-    // 1. [Content_Types].xml
+    // 1. Static Package Files
     zip.file('[Content_Types].xml', OpenXmlTemplates.getContentTypesXml());
-
-    // 2. _rels/.rels
     zip.file('_rels/.rels', OpenXmlTemplates.getRootRelsXml());
-
-    // 3. word/_rels/document.xml.rels
     zip.file('word/_rels/document.xml.rels', OpenXmlTemplates.getDocumentRelsXml());
-
-    // 4. word/styles.xml
     zip.file('word/styles.xml', OpenXmlTemplates.getStylesXml(isRtl));
-
-    // 5. word/fontTable.xml
     zip.file('word/fontTable.xml', OpenXmlTemplates.getFontTableXml());
-
-    // 6. word/settings.xml
     zip.file('word/settings.xml', OpenXmlTemplates.getSettingsXml());
 
-    // 7. word/document.xml
+    // 2. Main Document Body
     const documentXml = this.buildDocumentXml(doc, options, isRtl);
     zip.file('word/document.xml', documentXml);
 
@@ -57,7 +47,9 @@ export class DocxGenerator {
     let bodyXml = '';
 
     // Title / Cover Header
-    const title = doc.metadata.title || options.filename?.replace(/\.md$/i, '') || 'Document';
+    const rawTitle = doc.metadata.title || options.filename?.replace(/\.md$/i, '') || 'Document';
+    const cleanTitle = rawTitle.replace(/^#+\s*/, '').trim();
+
     bodyXml += `
       <w:p>
         <w:pPr>
@@ -73,12 +65,12 @@ export class DocxGenerator {
             <w:color w:val="1E3A8A"/>
             ${isRtl ? '<w:rtl/>' : ''}
           </w:rPr>
-          <w:t>${this.escapeXml(title)}</w:t>
+          <w:t>${this.escapeXml(cleanTitle)}</w:t>
         </w:r>
       </w:p>
     `;
 
-    // Metadata line if present (author, date)
+    // Metadata line if present (author, date, words)
     const metaParts: string[] = [];
     if (doc.metadata.author) metaParts.push(`الكاتب: ${doc.metadata.author}`);
     if (doc.metadata.date) metaParts.push(`التاريخ: ${doc.metadata.date}`);
@@ -89,7 +81,7 @@ export class DocxGenerator {
         <w:p>
           <w:pPr>
             ${isRtl ? '<w:bidi/><w:jc w:val="right"/>' : '<w:jc w:val="left"/>'}
-            <w:spacing w:before="0" w:after="300"/>
+            <w:spacing w:before="0" w:after="260"/>
           </w:pPr>
           <w:r>
             <w:rPr>
@@ -143,7 +135,7 @@ export class DocxGenerator {
     if (node.nodeType === Node.TEXT_NODE) {
       const text = node.textContent?.trim();
       if (!text) return '';
-      return this.createParagraph(this.createRun(text, {}, isRtl), isRtl);
+      return this.createParagraph(this.parseResidualMarkdown(text, isRtl), isRtl);
     }
 
     if (node.nodeType !== Node.ELEMENT_NODE) return '';
@@ -151,10 +143,15 @@ export class DocxGenerator {
     const el = node as HTMLElement;
     const tagName = el.tagName.toLowerCase();
 
-    // 1. Headings (h1 - h6)
+    // 1. Headings (h1 - h6) - Cleanly strip any anchor # tags
     if (/^h[1-6]$/.test(tagName)) {
       const level = tagName[1];
-      const headingText = el.textContent || '';
+      const clone = el.cloneNode(true) as HTMLElement;
+      clone.querySelectorAll('.heading-anchor, a[href^="#"]').forEach((a) => a.remove());
+      const headingText = (clone.textContent || '').replace(/^#+\s*/, '').replace(/\s*#+$/, '').trim();
+
+      if (!headingText) return '';
+
       return `
         <w:p>
           <w:pPr>
@@ -204,40 +201,27 @@ export class DocxGenerator {
       }
     }
 
-    // 4. Code Block (<pre><code>)
-    if (tagName === 'pre') {
-      const codeText = el.textContent || '';
-      const lines = codeText.split('\n');
-      let codeRuns = '';
-      lines.forEach((line, idx) => {
-        codeRuns += `<w:r>
-          <w:rPr>
-            <w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/>
-            <w:sz w:val="19"/>
-            <w:color w:val="334155"/>
-          </w:rPr>
-          <w:t xml:space="preserve">${this.escapeXml(line)}</w:t>
-        </w:r>${idx < lines.length - 1 ? '<w:r><w:br/></w:r>' : ''}`;
-      });
-
-      return `
-        <w:p>
-          <w:pPr>
-            <w:pBdr>
-              <w:top w:val="single" w:sz="6" w:space="4" w:color="E2E8F0"/>
-              <w:left w:val="single" w:sz="12" w:space="4" w:color="3B82F6"/>
-              <w:bottom w:val="single" w:sz="6" w:space="4" w:color="E2E8F0"/>
-              <w:right w:val="single" w:sz="6" w:space="4" w:color="E2E8F0"/>
-            </w:pBdr>
-            <w:shd w:val="clear" w:color="auto" w:fill="F8FAFC"/>
-            <w:spacing w:before="140" w:after="140"/>
-          </w:pPr>
-          ${codeRuns}
-        </w:p>
-      `;
+    // 4. Notion Code Card (<div class="notion-code-card">)
+    if (el.classList.contains('notion-code-card')) {
+      const codeEl = el.querySelector('pre code') || el.querySelector('pre');
+      const langEl = el.querySelector('.code-card-header span:last-child');
+      const lang = langEl?.textContent?.trim() || '';
+      const codeText = codeEl?.textContent || '';
+      return this.renderCodeBlock(codeText, lang);
     }
 
-    // 5. Blockquote
+    // Standalone <pre><code>
+    if (tagName === 'pre') {
+      const codeText = el.textContent || '';
+      return this.renderCodeBlock(codeText, '');
+    }
+
+    // 5. GitHub / Markdown Callout Alerts (<div class="callout-block">)
+    if (el.classList.contains('callout-block')) {
+      return this.renderCalloutBox(el, isRtl);
+    }
+
+    // 6. Blockquote
     if (tagName === 'blockquote') {
       const innerParagraphs = Array.from(el.querySelectorAll('p'));
       const text = (innerParagraphs.length > 0 ? innerParagraphs.map(p => p.textContent).join('\n') : el.textContent) || '';
@@ -266,17 +250,17 @@ export class DocxGenerator {
       `;
     }
 
-    // 6. Tables
+    // 7. Tables
     if (tagName === 'table') {
-      return this.convertTable(el, isRtl);
+      return TableBuilder.convertTable(el, isRtl);
     }
 
-    // 7. Lists (ul, ol)
+    // 8. Lists (ul, ol)
     if (tagName === 'ul' || tagName === 'ol') {
       return this.convertList(el, tagName === 'ol', isRtl);
     }
 
-    // 8. Horizontal Rule (hr)
+    // 9. Horizontal Rule (hr)
     if (tagName === 'hr') {
       return `
         <w:p>
@@ -290,7 +274,7 @@ export class DocxGenerator {
       `;
     }
 
-    // 9. Standard Paragraphs or general containers
+    // 10. Standard Paragraphs or general containers
     const runs = this.convertInlineRuns(el, isRtl);
     if (!runs) return '';
 
@@ -305,6 +289,177 @@ export class DocxGenerator {
     `;
   }
 
+  /**
+   * Renders a pristine code block inside a shaded box with language tag and borders.
+   */
+  private static renderCodeBlock(codeText: string, lang: string): string {
+    const lines = codeText.split('\n');
+    let codeRuns = '';
+
+    if (lang) {
+      codeRuns += `<w:r>
+        <w:rPr>
+          <w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/>
+          <w:b/>
+          <w:sz w:val="18"/>
+          <w:color w:val="2563EB"/>
+        </w:rPr>
+        <w:t xml:space="preserve">[${this.escapeXml(lang.toUpperCase())}]</w:t>
+      </w:r><w:r><w:br/></w:r>`;
+    }
+
+    lines.forEach((line, idx) => {
+      codeRuns += `<w:r>
+        <w:rPr>
+          <w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/>
+          <w:sz w:val="19"/>
+          <w:color w:val="1E293B"/>
+        </w:rPr>
+        <w:t xml:space="preserve">${this.escapeXml(line)}</w:t>
+      </w:r>${idx < lines.length - 1 ? '<w:r><w:br/></w:r>' : ''}`;
+    });
+
+    return `
+      <w:p>
+        <w:pPr>
+          <w:pBdr>
+            <w:top w:val="single" w:sz="6" w:space="4" w:color="CBD5E1"/>
+            <w:left w:val="single" w:sz="18" w:space="4" w:color="3B82F6"/>
+            <w:bottom w:val="single" w:sz="6" w:space="4" w:color="CBD5E1"/>
+            <w:right w:val="single" w:sz="6" w:space="4" w:color="CBD5E1"/>
+          </w:pBdr>
+          <w:shd w:val="clear" w:color="auto" w:fill="F8FAFC"/>
+          <w:spacing w:before="160" w:after="160"/>
+        </w:pPr>
+        ${codeRuns}
+      </w:p>
+    `;
+  }
+
+  /**
+   * Renders a GitHub-style alert callout box as an elegant Word table card.
+   */
+  private static renderCalloutBox(calloutEl: HTMLElement, isRtl: boolean): string {
+    const titleEl = calloutEl.querySelector('.callout-title, .font-semibold') || calloutEl.firstElementChild;
+    const titleText = (titleEl?.textContent || 'ملاحظة').trim();
+
+    const bodyEl = calloutEl.querySelector('.callout-body, .text-sm:last-child') || calloutEl;
+    let rawBody = (bodyEl !== titleEl ? bodyEl.textContent : '') || '';
+    if (!rawBody) rawBody = calloutEl.textContent || '';
+    rawBody = rawBody.replace(titleText, '').trim();
+
+    // Determine color theme based on callout title
+    let borderColor = '3B82F6';
+    let bgColor = 'EFF6FF';
+    let titleColor = '1D4ED8';
+
+    if (/tip|نصيحة/i.test(titleText)) {
+      borderColor = '10B981';
+      bgColor = 'ECFDF5';
+      titleColor = '047857';
+    } else if (/important|هام/i.test(titleText)) {
+      borderColor = '8B5CF6';
+      bgColor = 'F5F3FF';
+      titleColor = '6D28D9';
+    } else if (/warning|تحذير/i.test(titleText)) {
+      borderColor = 'F59E0B';
+      bgColor = 'FFFBEB';
+      titleColor = 'B45309';
+    } else if (/caution|خطر/i.test(titleText)) {
+      borderColor = 'EF4444';
+      bgColor = 'FEF2F2';
+      titleColor = 'B91C1C';
+    }
+
+    const bodyRuns = this.parseResidualMarkdown(rawBody, isRtl);
+
+    return `
+      <w:tbl>
+        <w:tblPr>
+          <w:tblW w:w="5000" w:type="pct"/>
+          ${isRtl ? '<w:bidiVisual/>' : ''}
+          <w:tblBorders>
+            <w:top w:val="none"/>
+            <w:bottom w:val="none"/>
+            <w:${isRtl ? 'right' : 'left'} w:val="single" w:sz="24" w:space="0" w:color="${borderColor}"/>
+            <w:${isRtl ? 'left' : 'right'} w:val="none"/>
+            <w:insideH w:val="none"/>
+            <w:insideV w:val="none"/>
+          </w:tblBorders>
+          <w:tblCellMar>
+            <w:top w:w="120" w:type="dxa"/>
+            <w:left w:w="160" w:type="dxa"/>
+            <w:bottom w:w="120" w:type="dxa"/>
+            <w:right w:w="160" w:type="dxa"/>
+          </w:tblCellMar>
+        </w:tblPr>
+        <w:tr>
+          <w:tc>
+            <w:tcPr>
+              <w:tcW w:w="0" w:type="auto"/>
+              <w:shd w:val="clear" w:color="auto" w:fill="${bgColor}"/>
+            </w:tcPr>
+            <w:p>
+              <w:pPr>
+                ${isRtl ? '<w:bidi/><w:jc w:val="right"/>' : '<w:jc w:val="left"/>'}
+                <w:spacing w:before="40" w:after="40"/>
+              </w:pPr>
+              <w:r>
+                <w:rPr>
+                  <w:rFonts w:ascii="Segoe UI" w:hAnsi="Segoe UI" w:cs="Traditional Arabic"/>
+                  <w:b/>
+                  <w:sz w:val="21"/>
+                  <w:color w:val="${titleColor}"/>
+                  ${isRtl ? '<w:rtl/>' : ''}
+                </w:rPr>
+                <w:t>${this.escapeXml(titleText)}</w:t>
+              </w:r>
+            </w:p>
+            <w:p>
+              <w:pPr>
+                ${isRtl ? '<w:bidi/><w:jc w:val="both"/>' : '<w:jc w:val="left"/>'}
+                <w:spacing w:before="40" w:after="60"/>
+              </w:pPr>
+              ${bodyRuns}
+            </w:p>
+          </w:tc>
+        </w:tr>
+      </w:tbl>
+    `;
+  }
+
+  private static convertList(listEl: HTMLElement, isOrdered: boolean, isRtl: boolean): string {
+    const items = Array.from(listEl.querySelectorAll(':scope > li'));
+    let xml = '';
+
+    items.forEach((li, idx) => {
+      const prefix = isOrdered ? `${idx + 1}.` : '•';
+      const runs = this.convertInlineRuns(li as HTMLElement, isRtl);
+
+      xml += `
+        <w:p>
+          <w:pPr>
+            ${isRtl ? '<w:bidi/><w:jc w:val="right"/>' : '<w:jc w:val="left"/>'}
+            <w:spacing w:before="50" w:after="50"/>
+            <w:ind w:${isRtl ? 'right' : 'left'}="480" w:hanging="240"/>
+          </w:pPr>
+          <w:r>
+            <w:rPr>
+              <w:rFonts w:ascii="Segoe UI" w:hAnsi="Segoe UI" w:cs="Traditional Arabic"/>
+              <w:b/>
+              <w:color w:val="3B82F6"/>
+              ${isRtl ? '<w:rtl/>' : ''}
+            </w:rPr>
+            <w:t xml:space="preserve">${prefix}  </w:t>
+          </w:r>
+          ${runs}
+        </w:p>
+      `;
+    });
+
+    return xml;
+  }
+
   private static convertInlineRuns(parent: HTMLElement, isRtl: boolean): string {
     let runs = '';
 
@@ -312,7 +467,7 @@ export class DocxGenerator {
       if (child.nodeType === Node.TEXT_NODE) {
         const text = child.textContent;
         if (text) {
-          runs += this.createRun(text, {}, isRtl);
+          runs += this.parseResidualMarkdown(text, isRtl);
         }
         continue;
       }
@@ -360,6 +515,10 @@ export class DocxGenerator {
 
       // Hyperlink
       if (tag === 'a') {
+        // Ignore heading anchor
+        if (el.classList.contains('heading-anchor') || el.getAttribute('href')?.startsWith('#')) {
+          continue;
+        }
         const linkText = el.textContent || '';
         runs += `<w:r>
           <w:rPr>
@@ -380,37 +539,36 @@ export class DocxGenerator {
     return runs;
   }
 
-  private static convertTable(tableEl: HTMLElement, isRtl: boolean): string {
-    return DocxTableBuilder.convertTable(tableEl, isRtl, (text) => this.escapeXml(text));
-  }
+  /**
+   * Parses residual markdown markers (**bold**, `code`) in raw text nodes.
+   */
+  private static parseResidualMarkdown(rawText: string, isRtl: boolean): string {
+    if (!rawText.includes('**') && !rawText.includes('`')) {
+      return this.createRun(rawText, {}, isRtl);
+    }
 
-  private static convertList(listEl: HTMLElement, isOrdered: boolean, isRtl: boolean): string {
-    const items = Array.from(listEl.querySelectorAll(':scope > li'));
     let xml = '';
+    // Tokenize by **bold** or `code`
+    const regex = /(\*\*.*?\*\*|`.*?`)/g;
+    const parts = rawText.split(regex);
 
-    items.forEach((li, idx) => {
-      const prefix = isOrdered ? `${idx + 1}. ` : '• ';
-      const runs = this.convertInlineRuns(li as HTMLElement, isRtl);
-
-      xml += `
-        <w:p>
-          <w:pPr>
-            ${isRtl ? '<w:bidi/><w:jc w:val="right"/>' : '<w:jc w:val="left"/>'}
-            <w:spacing w:before="40" w:after="40"/>
-            <w:ind w:${isRtl ? 'right' : 'left'}="360" w:hanging="240"/>
-          </w:pPr>
-          <w:r>
-            <w:rPr>
-              <w:rFonts w:ascii="Segoe UI" w:hAnsi="Segoe UI" w:cs="Traditional Arabic"/>
-              <w:b/>
-              <w:color w:val="3B82F6"/>
-              ${isRtl ? '<w:rtl/>' : ''}
-            </w:rPr>
-            <w:t>${prefix}</w:t>
-          </w:r>
-          ${runs}
-        </w:p>
-      `;
+    parts.forEach((part) => {
+      if (!part) return;
+      if (part.startsWith('**') && part.endsWith('**') && part.length >= 4) {
+        xml += this.createRun(part.slice(2, -2), { bold: true }, isRtl);
+      } else if (part.startsWith('`') && part.endsWith('`') && part.length >= 2) {
+        xml += `<w:r>
+          <w:rPr>
+            <w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/>
+            <w:sz w:val="19"/>
+            <w:color w:val="BE185D"/>
+            <w:shd w:val="clear" w:color="auto" w:fill="F1F5F9"/>
+          </w:rPr>
+          <w:t xml:space="preserve">${this.escapeXml(part.slice(1, -1))}</w:t>
+        </w:r>`;
+      } else {
+        xml += this.createRun(part, {}, isRtl);
+      }
     });
 
     return xml;

@@ -179,11 +179,11 @@ export class MarkdownPipeline {
       const dir = BiDiArbitrator.detectDirection(cleanBody);
 
       return `<div class="callout-block my-5 p-4 rounded-xl border-r-4 ${meta.border} ${meta.bg} shadow-sm" dir="${dir}">
-        <div class="flex items-center gap-2 font-semibold text-sm ${meta.color} mb-1.5">
+        <div class="callout-title flex items-center gap-2 font-semibold text-sm ${meta.color} mb-1.5">
           <span>${meta.icon}</span>
           <span>${meta.title} (${upperType})</span>
         </div>
-        <div class="text-sm leading-relaxed text-theme-text/90">${cleanBody}</div>
+        <div class="callout-body text-sm leading-relaxed text-theme-text/90">${cleanBody}</div>
       </div>\n\n`;
     });
   }

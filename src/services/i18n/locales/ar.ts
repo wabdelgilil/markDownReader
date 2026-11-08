@@ -2,8 +2,8 @@ import { TranslationDictionary } from '../types';
 
 export const ar: TranslationDictionary = {
   brand: {
-    title: 'MarkDownReader',
-    tagline: 'قارئ ومستعرض مستندات Markdown',
+    title: 'MDFull',
+    tagline: 'محطة مستندات Markdown المتكاملة',
   },
   navbar: {
     openFile: 'فتح ملف',

@@ -1,7 +1,7 @@
 # System Requirements Specification (SRS)
-## MarkDownReader: Universal High-Performance Markdown Document Station
+## MDFull: Universal High-Performance Markdown Document Station
 
-**Document Identifier:** `SRS-MDR-2026-V1.0`  
+**Document Identifier:** `SRS-MDFULL-2026-V1.0`  
 **Classification:** Engineering Specification & Architectural Standard  
 **Revision:** `1.0.0`  
 **Status:** Approved for Implementation
@@ -17,7 +17,7 @@ Technical documentation and research writing have standardized around Markdown (
 3. Complex interactive vector diagramming (Mermaid.js).
 4. Modern documentation callouts and extended frontmatter.
 
-`MarkDownReader` is engineered as a zero-bloat, modular, cross-platform document station that delivers instant startup, sub-millisecond document parsing, first-class RTL Arabic typography, resilient mathematical typesetting, interactive diagram exploration, and versatile viewing modes (Light, Dark, Sepia, Terminal, and Presentation Deck).
+`MDFull` is engineered as a zero-bloat, modular, cross-platform document station that delivers instant startup, sub-millisecond document parsing, first-class RTL Arabic typography, resilient mathematical typesetting, interactive diagram exploration, and versatile viewing modes (Light, Dark, Sepia, Code Editor, and Presentation Deck).
 
 ### 1.2 Target Personas & Stakeholders
 * **Software Engineers & System Architects:** Reading deep technical documentation, architecture decision records (ADRs), and API guides with high-density code snippets and Mermaid diagrams.

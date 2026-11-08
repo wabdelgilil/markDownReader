@@ -4,8 +4,9 @@
  * with full RTL BiDi alignment, alternating row shading, and cell borders.
  */
 
-export class DocxTableBuilder {
-  public static convertTable(tableEl: HTMLElement, isRtl: boolean, escapeFn: (text: string) => string): string {
+export class TableBuilder {
+  public static convertTable(tableEl: HTMLElement, isRtl: boolean, escapeFn?: (text: string) => string): string {
+    const esc = escapeFn || this.defaultEscapeXml;
     const rows = Array.from(tableEl.querySelectorAll('tr'));
     if (rows.length === 0) return '';
 
@@ -45,7 +46,7 @@ export class DocxTableBuilder {
                   <w:color w:val="${isHeader ? '0F172A' : '334155'}"/>
                   ${isRtl ? '<w:rtl/>' : ''}
                 </w:rPr>
-                <w:t>${escapeFn(cellText.trim())}</w:t>
+                <w:t>${esc(cellText.trim())}</w:t>
               </w:r>
             </w:p>
           </w:tc>
@@ -80,4 +81,15 @@ export class DocxTableBuilder {
       </w:tbl>
     `;
   }
+
+  private static defaultEscapeXml(unsafe: string): string {
+    return unsafe
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&apos;');
+  }
 }
+
+export const DocxTableBuilder = TableBuilder;

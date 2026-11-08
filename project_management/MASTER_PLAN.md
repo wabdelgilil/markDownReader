@@ -1,4 +1,4 @@
-# Active Master Plan: MarkDownReader
+# Active Master Plan: MDFull
 **Radar Status:** Active Implementation  
 **Single Source of Truth** for ongoing and upcoming work.
 

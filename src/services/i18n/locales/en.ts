@@ -2,8 +2,8 @@ import { TranslationDictionary } from '../types';
 
 export const en: TranslationDictionary = {
   brand: {
-    title: 'MarkDownReader',
-    tagline: 'High-Performance Markdown Document Station',
+    title: 'MDFull',
+    tagline: 'High-Performance Full-Featured Markdown Station',
   },
   navbar: {
     openFile: 'Open File',

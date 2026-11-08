@@ -74,8 +74,8 @@ export const Navbar: React.FC<NavbarProps> = ({
       <div className="flex items-center justify-between px-4 py-2 gap-4">
         {/* Brand / Logo */}
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-theme-accent/15 text-theme-accent flex items-center justify-center font-bold text-lg border border-theme-accent/30">
-            M
+          <div className="w-8 h-8 rounded-lg bg-theme-accent/15 text-theme-accent flex items-center justify-center font-black text-xs tracking-tighter border border-theme-accent/30">
+            MD
           </div>
           <div className="flex flex-col">
             <span className="font-bold text-sm tracking-wide text-theme-text">

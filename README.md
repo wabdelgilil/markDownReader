@@ -1,4 +1,4 @@
-# MarkDownReader 🚀
+# MDFull 🚀
 > Universal High-Performance Markdown Document Station with First-Class Bi-Directional Arabic RTL, Scientific Math Typesetting ($\LaTeX$), Interactive Diagrams (Mermaid.js), Multi-Tab Navigation, and Curated Reading Themes.
 
 ---
@@ -43,7 +43,7 @@ npm run build
 ## 📁 Project Architecture & Directory Map
 
 ```text
-markDownReader/
+MDFull/
 ├── SRS.md                    # System Requirements Specification (Mandatory)
 ├── README.md                 # Project Overview & Quickstart Guide
 ├── docs/
