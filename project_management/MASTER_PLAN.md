@@ -8,6 +8,7 @@
 
 | ID | Task Name | Status | Priority | Execution Plan File |
 | :--- | :--- | :--- | :--- | :--- |
+| **TSK-13** | Enterprise Modular Architecture Refactoring (Phase 2) | `[/] In Progress` | High | `project_management/tasks/task_13_codebase_refactor_v2.md` |
 | **TSK-07** | Desktop Native Host Adapter (Tauri 2.0 Integration) | `[-] Pending` | High | `project_management/tasks/task_07_tauri_adapter.md` |
 
 ---

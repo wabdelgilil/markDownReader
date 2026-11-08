@@ -105,7 +105,11 @@ export class MarkdownPipeline {
     const withRestoredMath = MathTransformer.restorePlaceholders(parsedRawHtml, mathMap, diagnostics);
 
     // 7. Sanitize HTML preserving styling and math attributes
-    const sanitizedHtml = DOMPurify.sanitize(withRestoredMath, {
+    const domPurifyInstance = typeof (DOMPurify as any) === 'function' && typeof (DOMPurify as any).sanitize !== 'function'
+      ? (DOMPurify as any)(typeof window !== 'undefined' ? window : undefined)
+      : DOMPurify;
+
+    const sanitizedHtml = domPurifyInstance.sanitize(withRestoredMath, {
       ADD_TAGS: [
         'bdi', 'span', 'div', 'button', 'svg', 'path', 'details', 'summary',
         'table', 'thead', 'tbody', 'tr', 'th', 'td', 'code', 'pre', 'hr',
