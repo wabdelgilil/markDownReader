@@ -31,11 +31,11 @@ export class MarkdownPipeline {
     // 2. Extract Mermaid Diagrams into placeholders before markdown tokenization
     const { content: withoutDiagrams, diagrams } = DiagramEngine.extractPlaceholders(withoutFrontmatter);
 
-    // 3. Process KaTeX Mathematics (Inline & Display)
-    const withMath = MathTransformer.transform(withoutDiagrams, diagnostics);
+    // 3. Extract KaTeX Mathematics into safe placeholders to prevent markdown corruption
+    const { content: withoutMath, mathMap } = MathTransformer.extractPlaceholders(withoutDiagrams);
 
     // 4. Process GitHub Alerts / Callouts
-    const withCallouts = this.transformCallouts(withMath);
+    const withCallouts = this.transformCallouts(withoutMath);
 
     // 5. Configure Marked parser with custom heading and paragraph hooks
     const markedInstance = new Marked({
@@ -74,15 +74,22 @@ export class MarkdownPipeline {
 
     const parsedRawHtml = markedInstance.parse(withCallouts) as string;
 
-    // 6. Post-processing: BiDi isolation on inline code spans & anchor punctuation
-    const isolatedHtml = BiDiArbitrator.isolateCodeSpans(parsedRawHtml);
+    // 6. Restore KaTeX Mathematics with resilient HTML rendering
+    const withRestoredMath = MathTransformer.restorePlaceholders(parsedRawHtml, mathMap, diagnostics);
 
-    // 7. Sanitize HTML
+    // 7. Post-processing: BiDi isolation on inline code spans & anchor punctuation
+    const isolatedHtml = BiDiArbitrator.isolateCodeSpans(withRestoredMath);
+
+    // 8. Sanitize HTML preserving styling and math attributes
     const sanitizedHtml = DOMPurify.sanitize(isolatedHtml, {
-      ADD_TAGS: ['bdi', 'span', 'button', 'svg', 'path', 'details', 'summary'],
+      ADD_TAGS: [
+        'bdi', 'span', 'div', 'button', 'svg', 'path', 'details', 'summary',
+        'table', 'thead', 'tbody', 'tr', 'th', 'td', 'code', 'pre', 'hr',
+      ],
       ADD_ATTR: [
         'dir', 'data-diagram-id', 'data-diagram-code', 'data-latex',
-        'data-action', 'target', 'class', 'id', 'align', 'title',
+        'data-action', 'target', 'class', 'id', 'align', 'title', 'style',
+        'aria-hidden',
       ],
     });
 
