@@ -1,4 +1,5 @@
 import mermaid from 'mermaid';
+import { DiagramStyler } from './styler';
 
 /**
  * Interactive Diagram Engine powered by Mermaid.js
@@ -147,15 +148,10 @@ export class DiagramEngine {
         if (svgElement) {
           svgElement.style.maxWidth = '100%';
           svgElement.style.height = 'auto';
-          svgElement.style.direction = 'ltr';
-          svgElement.setAttribute('dir', 'ltr');
           svgElement.setAttribute('font-family', 'Readex Pro, system-ui, sans-serif');
 
-          // Clean up Git Graph commit labels (remove obstructive grey boxes)
-          const commitLabelBkgs = svgElement.querySelectorAll('.commit-label-bkg');
-          commitLabelBkgs.forEach((bkg) => {
-            (bkg as HTMLElement).style.display = 'none';
-          });
+          // Apply software-grade styling (Visio, Obsidian, MS Project)
+          DiagramStyler.enhanceSvg(svgElement);
         }
       } catch (err: unknown) {
         const errorMsg = err instanceof Error ? err.message : 'Error rendering diagram';
