@@ -150,8 +150,12 @@ The architecture strictly adheres to Domain-Driven Design (DDD), SOLID principle
 * **FR-23 (Live File Watcher):** Automatically refreshes open documents when modified externally with zero scroll position loss.
 * **FR-24 (Document Health Inspector):** Reports broken relative image paths, dead internal heading anchors, and unclosed syntax fences.
 * **FR-25 (Universal Single-File HTML Exporter):** Packages document into a single standalone `.html` file with Base64 embedded images, fonts, and inline CSS/JS that works 100% offline on any operating system.
-* **FR-26 (Print-Engine PDF):** Vector PDF generation with clean page breaks and running headers/footers.
+* **FR-26 (Print-Engine Vector PDF):** High-fidelity vector PDF generation with A4 pagination, running headers/footers with dynamic page numbers, KaTeX typography, and page-break rules.
 * **FR-27 (Rendered Visual Diff Viewer):** Synchronized dual-pane comparison between two markdown documents with highlighted additions and deletions.
+* **FR-28 (Enterprise Microsoft Word DOCX Exporter):** Generates true OpenXML `.docx` files featuring:
+  - **Native Word OMML Equations:** Converts LaTeX mathematical formulas into native Microsoft Word equations (`<m:oMath>` / `<m:oMathPara>`), enabling interactive formula editing within Word.
+  - **Native Word Drawing Blocks:** Transforms Mermaid flowcharts and structural diagrams into native Word drawing shapes (`<v:group>`, `<v:roundrect>`, `<v:textbox>`, `<v:line>`) with editable node text and customizable fill styles.
+  - **Enterprise Typography & Layout:** Complete RTL Arabic bidirectional paragraph formatting, table structures with borders/shading, code fences, blockquotes, and heading outlines.
 
 ---
 

@@ -31,47 +31,84 @@
    Prism.js Syntax Highlighting - Multi-Theme Precision
    ========================================================= */
 
-/* Dark & Terminal Themes */
-[data-theme="dark"] .token.comment,
-[data-theme="terminal"] .token.comment {
+/* Dark Theme */
+[data-theme="dark"] .token.comment {
   color: #64748b !important;
   font-style: italic !important;
 }
-[data-theme="dark"] .token.punctuation,
-[data-theme="terminal"] .token.punctuation {
+[data-theme="dark"] .token.punctuation {
   color: #94a3b8 !important;
 }
-[data-theme="dark"] .token.keyword,
-[data-theme="terminal"] .token.keyword {
+[data-theme="dark"] .token.keyword {
   color: #fb7185 !important;
   font-weight: 600 !important;
 }
 [data-theme="dark"] .token.function,
-[data-theme="dark"] .token.class-name,
-[data-theme="terminal"] .token.function,
-[data-theme="terminal"] .token.class-name {
+[data-theme="dark"] .token.class-name {
   color: #38bdf8 !important;
   font-weight: 600 !important;
 }
 [data-theme="dark"] .token.string,
 [data-theme="dark"] .token.char,
-[data-theme="dark"] .token.attr-name,
-[data-theme="terminal"] .token.string {
+[data-theme="dark"] .token.attr-name {
   color: #34d399 !important;
 }
 [data-theme="dark"] .token.number,
 [data-theme="dark"] .token.boolean,
-[data-theme="dark"] .token.constant,
-[data-theme="terminal"] .token.number {
+[data-theme="dark"] .token.constant {
   color: #fbbf24 !important;
 }
-[data-theme="dark"] .token.operator,
-[data-theme="terminal"] .token.operator {
+[data-theme="dark"] .token.operator {
   color: #06b6d4 !important;
 }
-[data-theme="dark"] .token.variable,
-[data-theme="terminal"] .token.variable {
+[data-theme="dark"] .token.variable {
   color: #c084fc !important;
+}
+
+/* VS Code / IDE Code Editor Theme */
+[data-theme="editor"] .token.comment,
+[data-theme="terminal"] .token.comment {
+  color: #6a9955 !important;
+  font-style: italic !important;
+}
+[data-theme="editor"] .token.punctuation,
+[data-theme="terminal"] .token.punctuation {
+  color: #d4d4d4 !important;
+}
+[data-theme="editor"] .token.keyword,
+[data-theme="terminal"] .token.keyword {
+  color: #c586c0 !important;
+  font-weight: 600 !important;
+}
+[data-theme="editor"] .token.function,
+[data-theme="terminal"] .token.function {
+  color: #dcdcaa !important;
+  font-weight: 600 !important;
+}
+[data-theme="editor"] .token.class-name,
+[data-theme="terminal"] .token.class-name {
+  color: #4ec9b0 !important;
+  font-weight: 600 !important;
+}
+[data-theme="editor"] .token.string,
+[data-theme="editor"] .token.char,
+[data-theme="editor"] .token.attr-name,
+[data-theme="terminal"] .token.string {
+  color: #ce9178 !important;
+}
+[data-theme="editor"] .token.number,
+[data-theme="editor"] .token.boolean,
+[data-theme="editor"] .token.constant,
+[data-theme="terminal"] .token.number {
+  color: #b5cea8 !important;
+}
+[data-theme="editor"] .token.operator,
+[data-theme="terminal"] .token.operator {
+  color: #d4d4d4 !important;
+}
+[data-theme="editor"] .token.variable,
+[data-theme="terminal"] .token.variable {
+  color: #9cdcfe !important;
 }
 
 /* Light Theme - Deep Jewel Tones (No Washing Out) */

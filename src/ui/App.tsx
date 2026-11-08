@@ -146,7 +146,7 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className={`h-screen max-h-screen overflow-hidden flex flex-col bg-theme-bg text-theme-text ${theme === 'terminal' ? 'terminal-scanline' : ''}`}>
+    <div className="h-screen max-h-screen overflow-hidden flex flex-col bg-theme-bg text-theme-text">
       {/* Top Navbar with Multi-Tab Strip */}
       <Navbar
         currentTheme={theme}

@@ -32,15 +32,16 @@
   --color-code-bg: #211c18;
 }
 
+[data-theme="editor"],
 [data-theme="terminal"] {
-  --color-bg: #050505;
-  --color-surface: #0a0d0a;
-  --color-border: #00ff6633;
-  --color-text: #00ff66;
-  --color-muted: #00aa44;
-  --color-accent: #00ff66;
-  --color-accent-hover: #33ff88;
-  --color-code-bg: #040805;
+  --color-bg: #1e1e1e;
+  --color-surface: #252526;
+  --color-border: #333333;
+  --color-text: #d4d4d4;
+  --color-muted: #858585;
+  --color-accent: #007acc;
+  --color-accent-hover: #1f8ad2;
+  --color-code-bg: #181818;
 }
 
 /* Base typography & scrollbar */
@@ -65,16 +66,4 @@ html {
   background: var(--color-muted);
 }
 
-/* Terminal CRT Scanline subtle effect */
-[data-theme="terminal"] .terminal-scanline {
-  background: linear-gradient(
-    rgba(18, 16, 16, 0) 50%, 
-    rgba(0, 0, 0, 0.25) 50%
-  ), linear-gradient(
-    90deg,
-    rgba(255, 0, 0, 0.03),
-    rgba(0, 255, 0, 0.01),
-    rgba(0, 0, 255, 0.03)
-  );
-  background-size: 100% 3px, 3px 100%;
-}
+

@@ -28,8 +28,8 @@ export class HtmlExporterService {
     [data-theme="sepia"] {
       --bg: #fbf0d9; --surface: #f4e4c1; --border: #dfcaa2; --text: #433422; --muted: #7d6b53; --accent: #92400e; --code: #ede0bc;
     }
-    [data-theme="terminal"] {
-      --bg: #050505; --surface: #0d1117; --border: #00ff6633; --text: #00ff66; --muted: #00aa44; --accent: #00ff66; --code: #0a100d;
+    [data-theme="editor"], [data-theme="terminal"] {
+      --bg: #1e1e1e; --surface: #252526; --border: #333333; --text: #d4d4d4; --muted: #858585; --accent: #007acc; --code: #181818;
     }
     body {
       background: var(--bg);

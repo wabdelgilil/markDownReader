@@ -54,8 +54,8 @@ export class HtmlExporter extends BaseExporter implements IExporter {
     [data-theme="sepia"] {
       --bg: #f7f3e9; --surface: #f0ead9; --border: #ded5c2; --text: #2c2217; --muted: #786b59; --accent: #9a4316;
     }
-    [data-theme="terminal"] {
-      --bg: #050505; --surface: #0a0d0a; --border: #00ff6633; --text: #00ff66; --muted: #00aa44; --accent: #00ff66;
+    [data-theme="editor"], [data-theme="terminal"] {
+      --bg: #1e1e1e; --surface: #252526; --border: #333333; --text: #d4d4d4; --muted: #858585; --accent: #007acc;
     }
     body {
       background-color: var(--bg);

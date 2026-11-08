@@ -6,7 +6,7 @@ import {
   Sun, 
   Moon, 
   BookOpen, 
-  Terminal, 
+  Code2, 
   Presentation, 
   Activity, 
   Download,
@@ -93,7 +93,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     { id: 'light', label: t.navbar.themes.light, icon: <Sun className="w-4 h-4" /> },
     { id: 'dark', label: t.navbar.themes.dark, icon: <Moon className="w-4 h-4" /> },
     { id: 'sepia', label: t.navbar.themes.sepia, icon: <BookOpen className="w-4 h-4" /> },
-    { id: 'terminal', label: t.navbar.themes.terminal, icon: <Terminal className="w-4 h-4" /> },
+    { id: 'editor', label: t.navbar.themes.editor, icon: <Code2 className="w-4 h-4" /> },
   ];
 
   const exportOptions: { id: ExportFormat; title: string; subtitle: string; icon: React.ReactNode }[] = [
@@ -105,14 +105,14 @@ export const Navbar: React.FC<NavbarProps> = ({
     },
     {
       id: 'pdf',
-      title: locale === 'ar' ? 'مستند PDF للطباعة' : 'Print-Ready PDF',
-      subtitle: locale === 'ar' ? 'تنسيق صفحات A4 مع ترقيم' : 'Paginated A4 with page numbers',
+      title: locale === 'ar' ? 'مستند PDF فائق الدقة' : 'Print-Ready Vector PDF',
+      subtitle: locale === 'ar' ? 'رسوم متجهة، تنسيق A4 وترقيم صفحات' : 'Scalable vectors, A4 pagination & math',
       icon: <Printer className="w-4 h-4 text-rose-400" />,
     },
     {
       id: 'docx',
-      title: locale === 'ar' ? 'مستند Word (DOCX)' : 'Microsoft Word (DOCX)',
-      subtitle: locale === 'ar' ? 'متوافق مع جداول وتنسيقات وورد' : 'Compatible with Word tables & headings',
+      title: locale === 'ar' ? 'مستند Word أصلي (DOCX)' : 'Native Microsoft Word (DOCX)',
+      subtitle: locale === 'ar' ? 'معادلات OMML ومخططات أشكال وورد قابلة للتعديل' : 'Native OMML equations & editable Word shapes',
       icon: <FileType className="w-4 h-4 text-indigo-400" />,
     },
     {

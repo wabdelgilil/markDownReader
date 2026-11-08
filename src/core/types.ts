@@ -2,7 +2,7 @@
  * Domain Type Definitions for Core Markdown Engine
  */
 
-export type ReadingTheme = 'dark' | 'light' | 'sepia' | 'terminal';
+export type ReadingTheme = 'dark' | 'light' | 'sepia' | 'editor';
 
 export type TextDirection = 'rtl' | 'ltr' | 'auto';
 

@@ -22,7 +22,7 @@ export interface TranslationDictionary {
       light: string;
       dark: string;
       sepia: string;
-      terminal: string;
+      editor: string;
     };
     languageToggle: string;
   };
@@ -136,7 +136,7 @@ const translations: Record<AppLocale, TranslationDictionary> = {
         light: 'فاتح',
         dark: 'داكن',
         sepia: 'ورقي',
-        terminal: 'طرفية',
+        editor: 'محرر أكواد',
       },
       languageToggle: 'English',
     },
@@ -260,7 +260,7 @@ const translations: Record<AppLocale, TranslationDictionary> = {
         light: 'Light',
         dark: 'Dark',
         sepia: 'Sepia',
-        terminal: 'Terminal',
+        editor: 'Code Editor',
       },
       languageToggle: 'العربية',
     },

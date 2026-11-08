@@ -130,11 +130,14 @@
   font-weight: 600 !important;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.95)) !important;
 }
+[data-theme="editor"] .mermaid-target text.commit-label,
+[data-theme="editor"] .mermaid-target .commit-label,
 [data-theme="terminal"] .mermaid-target text.commit-label,
 [data-theme="terminal"] .mermaid-target .commit-label {
-  fill: #00ff66 !important;
+  fill: #d4d4d4 !important;
   font-size: 11px !important;
   font-weight: 600 !important;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.95)) !important;
 }
 .mermaid-target .branch-label text {
   fill: #ffffff !important;
