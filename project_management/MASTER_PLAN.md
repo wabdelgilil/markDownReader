@@ -8,7 +8,6 @@
 
 | ID | Task Name | Status | Priority | Execution Plan File |
 | :--- | :--- | :--- | :--- | :--- |
-| **TSK-03** | Diagram Multi-Style Engine & Custom User Palette Editor | `[/] In Progress` | High | `project_management/tasks/task_03_diagram_theme_engine.md` |
 | **TSK-04** | Enhanced Diagram Pan & Canvas Zoom Gestures | `[-] Pending` | Medium | `project_management/tasks/task_02_canvas_gestures.md` |
 | **TSK-05** | Local Workspace Folder Tree & File Drag-and-Drop | `[-] Pending` | Medium | `project_management/tasks/task_03_file_tree.md` |
 | **TSK-06** | Desktop Native Host Adapter (Tauri 2.0 Integration) | `[-] Pending` | High | `project_management/tasks/task_04_tauri_adapter.md` |
