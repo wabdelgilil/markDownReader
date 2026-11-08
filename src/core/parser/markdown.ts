@@ -3,6 +3,7 @@ import DOMPurify from 'dompurify';
 import { BiDiArbitrator } from '../bidi/arbitrator';
 import { MathTransformer } from '../math/katex';
 import { DiagramEngine } from '../diagrams/mermaid';
+import { CodeHighlighter } from './highlighter';
 import {
   ParsedDocument,
   DocumentHeading,
@@ -69,30 +70,29 @@ export class MarkdownPipeline {
           const dir = BiDiArbitrator.detectDirection(text);
           return `<p class="markdown-paragraph my-3 leading-relaxed text-theme-text" dir="${dir}">${text}</p>`;
         },
+        codespan({ text }: Tokens.Codespan): string {
+          return `<code class="font-mono text-xs md:text-sm px-1.5 py-0.5 rounded bg-theme-surface text-theme-accent border border-theme-border/60" dir="ltr"><bdi dir="ltr">${text}</bdi></code>`;
+        },
         code({ text, lang }: Tokens.Code): string {
           const language = (lang || 'code').trim();
-          const escapedCode = text
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;');
+          const highlightedCode = CodeHighlighter.highlight(text, language);
           const encodedRaw = encodeURIComponent(text);
 
-          return `<div class="notion-code-card my-6 rounded-2xl border border-theme-border bg-theme-surface/90 shadow-md overflow-hidden select-text" dir="ltr" style="direction: ltr !important; text-align: left !important;">
-            <div class="flex items-center justify-between px-4 py-2.5 border-b border-theme-border/70 bg-theme-bg/80 text-xs font-mono select-none" dir="ltr">
+          return `<div class="notion-code-card my-6 rounded-2xl border border-theme-border bg-theme-surface shadow-md overflow-hidden select-text" dir="ltr" style="direction: ltr !important; text-align: left !important;">
+            <div class="code-card-header flex items-center justify-between px-4 py-2.5 border-b border-theme-border bg-theme-bg/90 text-xs font-mono select-none" dir="ltr" style="direction: ltr !important;">
               <div class="flex items-center gap-2">
                 <span class="inline-block w-2.5 h-2.5 rounded-full bg-rose-500/80"></span>
                 <span class="inline-block w-2.5 h-2.5 rounded-full bg-amber-500/80"></span>
                 <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500/80"></span>
-                <span class="ml-2 px-2 py-0.5 rounded font-semibold text-[11px] uppercase tracking-wider bg-theme-accent/15 text-theme-accent border border-theme-accent/30">${language}</span>
+                <span class="ml-2 px-2.5 py-0.5 rounded-md font-semibold text-[11px] uppercase tracking-wider bg-theme-accent/15 text-theme-accent border border-theme-accent/30 font-mono">${language}</span>
               </div>
-              <button class="copy-code-btn flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-sans font-medium text-theme-muted hover:text-theme-text hover:bg-theme-surface border border-theme-border/60 transition-all cursor-pointer active:scale-95" data-code="${encodedRaw}" title="نسخ الكود إلى الحافظة">
+              <button class="copy-code-btn flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-sans font-medium text-theme-muted hover:text-theme-text hover:bg-theme-surface border border-theme-border transition-all cursor-pointer active:scale-95" data-code="${encodedRaw}" title="نسخ الكود إلى الحافظة">
                 <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
                 <span class="btn-text">نسخ الكود</span>
               </button>
             </div>
             <div class="p-4 overflow-x-auto text-left font-mono text-xs md:text-sm leading-relaxed" dir="ltr" style="direction: ltr !important; text-align: left !important;">
-              <pre class="m-0 p-0 font-mono" style="direction: ltr !important; text-align: left !important;"><code class="language-${language}" style="direction: ltr !important; text-align: left !important;">${escapedCode}</code></pre>
+              <pre class="m-0 p-0 font-mono" dir="ltr" style="direction: ltr !important; text-align: left !important;"><code class="language-${language} font-mono" dir="ltr" style="direction: ltr !important; text-align: left !important;">${highlightedCode}</code></pre>
             </div>
           </div>`;
         },
@@ -104,18 +104,15 @@ export class MarkdownPipeline {
     // 6. Restore KaTeX Mathematics with resilient HTML rendering
     const withRestoredMath = MathTransformer.restorePlaceholders(parsedRawHtml, mathMap, diagnostics);
 
-    // 7. Post-processing: BiDi isolation on inline code spans & anchor punctuation
-    const isolatedHtml = BiDiArbitrator.isolateCodeSpans(withRestoredMath);
-
-    // 8. Sanitize HTML preserving styling and math attributes
-    const sanitizedHtml = DOMPurify.sanitize(isolatedHtml, {
+    // 7. Sanitize HTML preserving styling and math attributes
+    const sanitizedHtml = DOMPurify.sanitize(withRestoredMath, {
       ADD_TAGS: [
         'bdi', 'span', 'div', 'button', 'svg', 'path', 'details', 'summary',
         'table', 'thead', 'tbody', 'tr', 'th', 'td', 'code', 'pre', 'hr',
       ],
       ADD_ATTR: [
         'dir', 'data-diagram-id', 'data-diagram-code', 'data-latex',
-        'data-action', 'target', 'class', 'id', 'align', 'title', 'style',
+        'data-action', 'data-code', 'target', 'class', 'id', 'align', 'title', 'style',
         'aria-hidden',
       ],
     });

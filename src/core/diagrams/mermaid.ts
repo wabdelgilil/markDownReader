@@ -6,10 +6,18 @@ import { DiagramDispatcher } from './dispatcher';
  * Automatically detects whether to use Markmap (Obsidian), Chart.js, or Mermaid with Visio enhancements.
  */
 export class DiagramEngine {
-  private static initialized = false;
-
   public static initialize(): void {
-    if (this.initialized) return;
+    const currentTheme = (typeof document !== 'undefined'
+      ? document.documentElement.getAttribute('data-theme')
+      : 'dark') || 'dark';
+
+    const isLight = currentTheme === 'light';
+    const isSepia = currentTheme === 'sepia';
+    const isTerminal = currentTheme === 'terminal';
+    const isDark = !isLight && !isSepia;
+
+    const textColor = isTerminal ? '#00ff66' : isLight ? '#0f172a' : isSepia ? '#433422' : '#f8fafc';
+    const lineColor = isTerminal ? '#00aa44' : isLight ? '#475569' : isSepia ? '#7d6b53' : '#94a3b8';
 
     mermaid.initialize({
       startOnLoad: false,
@@ -18,14 +26,25 @@ export class DiagramEngine {
       fontFamily: 'Readex Pro, system-ui, sans-serif',
       suppressErrorRendering: true,
       themeVariables: {
-        darkMode: true,
+        darkMode: isDark,
         background: 'transparent',
-        primaryColor: '#3b82f6',
-        primaryTextColor: '#f8fafc',
-        primaryBorderColor: '#60a5fa',
-        lineColor: '#64748b',
+        primaryColor: isLight ? '#2563eb' : isSepia ? '#92400e' : '#3b82f6',
+        primaryTextColor: '#ffffff', // For inside colored shapes/buttons
+        textColor: textColor,        // For floating labels, notes, message lines
+        lineColor: lineColor,
         secondaryColor: '#8b5cf6',
         tertiaryColor: '#10b981',
+
+        // Sequence Diagram specific variables
+        actorTextColor: '#ffffff',
+        actorLineColor: isLight ? '#cbd5e1' : '#334155',
+        signalColor: textColor,
+        signalTextColor: textColor,
+        labelBoxBkgColor: isLight ? '#f1f5f9' : '#1e293b',
+        labelBoxBorderColor: isLight ? '#cbd5e1' : '#475569',
+        labelTextColor: textColor,
+        loopTextColor: textColor,
+        noteTextColor: textColor,
 
         // Git Graph styling
         git0: '#38bdf8',
@@ -41,40 +60,42 @@ export class DiagramEngine {
         tagLabelColor: '#ffffff',
         tagLabelBackground: '#6366f1',
         tagLabelBorder: '#4f46e5',
-        commitLabelColor: '#f1f5f9',
+        commitLabelColor: textColor,
         commitLabelBackground: 'transparent',
 
         // Gantt Chart styling
-        sectionBkgColor: '#1e293b40',
-        altSectionBkgColor: '#0f172a40',
+        sectionBkgColor: isLight ? '#f1f5f9' : '#1e293b40',
+        altSectionBkgColor: isLight ? '#ffffff' : '#0f172a40',
         taskBkgColor: '#2563eb',
         taskBorderColor: '#3b82f6',
         taskTextColor: '#ffffff',
-        taskTextOutsideColor: '#f8fafc',
+        taskTextOutsideColor: textColor,
         activeTaskBkgColor: '#059669',
         activeTaskBorderColor: '#10b981',
         activeTaskTextColor: '#ffffff',
         doneTaskBkgColor: '#475569',
         doneTaskBorderColor: '#64748b',
-        doneTaskTextColor: '#cbd5e1',
+        doneTaskTextColor: '#f8fafc',
         critBkgColor: '#e11d48',
         critBorderColor: '#f43f5e',
         todayLineColor: '#ef4444',
-        gridColor: '#334155',
-        titleColor: '#f8fafc',
+        gridColor: isLight ? '#e2e8f0' : '#334155',
+        titleColor: textColor,
       },
       flowchart: {
         htmlLabels: true,
         curve: 'basis',
       },
+      sequence: {
+        showSequenceNumbers: true,
+        actorMargin: 50,
+      },
       gitGraph: {
         showCommitLabel: true,
         showBranches: true,
-        rotateCommitLabel: false,
+        rotateCommitLabel: true,
       },
     });
-
-    this.initialized = true;
   }
 
   /**

@@ -2,17 +2,25 @@
  * High-Fidelity SVG Diagram Styler
  * Transforms raw Mermaid SVGs into enterprise-grade visuals:
  * - Flowcharts: Microsoft Visio & Lucidchart corporate styling
+ * - Sequence Diagrams: High-contrast lifelines, messages, and actor cards
  * - Mindmaps: Obsidian & Miro organic chromatic hierarchy
  * - Gantt / Roadmaps: Microsoft Project executive timeline fidelity
- * - Git Graphs: GitHub / GitKraken vibrant branch trees
+ * - Git Graphs: GitHub / GitKraken tree with anti-collision commit labels
  */
 export class DiagramStyler {
   /**
    * Primary entry point: enhances an SVG element in-place with software-grade aesthetics.
    */
   public static enhanceSvg(svg: SVGSVGElement): void {
-    // 1. Inject SVG Defs (Gradients & Drop Shadows)
-    this.injectDefs(svg);
+    const currentTheme = (typeof document !== 'undefined'
+      ? document.documentElement.getAttribute('data-theme')
+      : 'dark') || 'dark';
+
+    const isLight = currentTheme === 'light';
+    const isSepia = currentTheme === 'sepia';
+
+    // 1. Inject SVG Defs (Gradients & Drop Shadows adapted to theme)
+    this.injectDefs(svg, isLight, isSepia);
 
     // 2. Enforce strict LTR layout on the SVG
     svg.style.direction = 'ltr';
@@ -20,30 +28,38 @@ export class DiagramStyler {
 
     // 3. Detect diagram type and apply specialized styling
     if (svg.classList.contains('gitGraph') || svg.querySelector('.commit')) {
-      this.enhanceGitGraph(svg);
+      this.enhanceGitGraph(svg, isLight, isSepia);
     } else if (svg.querySelector('.mindmap-node') || svg.classList.contains('mindmap')) {
-      this.enhanceMindmap(svg);
+      this.enhanceMindmap(svg, isLight, isSepia);
     } else if (svg.querySelector('.task') || svg.classList.contains('gantt')) {
-      this.enhanceGantt(svg);
+      this.enhanceGantt(svg, isLight, isSepia);
+    } else if (svg.querySelector('.messageText') || svg.querySelector('.actor') || svg.classList.contains('sequenceDiagram')) {
+      this.enhanceSequence(svg, isLight, isSepia);
     } else {
-      this.enhanceFlowchart(svg);
+      this.enhanceFlowchart(svg, isLight, isSepia);
     }
   }
 
   /**
-   * Injects reusable SVG filters, gradients, and markers.
+   * Injects reusable SVG filters, gradients, and markers adapted to the active theme.
    */
-  private static injectDefs(svg: SVGSVGElement): void {
+  private static injectDefs(svg: SVGSVGElement, isLight: boolean, isSepia: boolean): void {
     let defs = svg.querySelector('defs');
     if (!defs) {
       defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
       svg.insertBefore(defs, svg.firstChild);
     }
 
+    const shadowOpacity = isLight || isSepia ? '0.12' : '0.35';
+    const shadowColor = '#000000';
+
+    const procGradStart = isLight ? '#ffffff' : isSepia ? '#fef3c7' : '#1e293b';
+    const procGradEnd = isLight ? '#f1f5f9' : isSepia ? '#fde68a' : '#0f172a';
+
     const defsContent = `
       <!-- Ambient Drop Shadow Filter -->
       <filter id="visio-shadow" x="-10%" y="-10%" width="130%" height="130%">
-        <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#000000" flood-opacity="0.35"/>
+        <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="${shadowColor}" flood-opacity="${shadowOpacity}"/>
       </filter>
 
       <!-- Glow Filter for Milestones & Roots -->
@@ -51,10 +67,10 @@ export class DiagramStyler {
         <feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="#818cf8" flood-opacity="0.5"/>
       </filter>
 
-      <!-- Visio Process Gradient (Royal Slate) -->
+      <!-- Visio Process Gradient -->
       <linearGradient id="visio-process-grad" x1="0%" y1="0%" x2="0%" y2="100%">
-        <stop offset="0%" stop-color="#1e293b"/>
-        <stop offset="100%" stop-color="#0f172a"/>
+        <stop offset="0%" stop-color="${procGradStart}"/>
+        <stop offset="100%" stop-color="${procGradEnd}"/>
       </linearGradient>
 
       <!-- Visio Start/End Stadium Gradient (Emerald) -->
@@ -82,10 +98,9 @@ export class DiagramStyler {
   /**
    * Flowcharts -> Microsoft Visio & Lucidchart Enterprise Styling
    */
-  private static enhanceFlowchart(svg: SVGSVGElement): void {
+  private static enhanceFlowchart(svg: SVGSVGElement, isLight: boolean, isSepia: boolean): void {
     const nodes = svg.querySelectorAll('.node');
     nodes.forEach((node) => {
-      // Shape container (rect, circle, polygon)
       const rect = node.querySelector('rect');
       const polygon = node.querySelector('polygon');
       const circle = node.querySelector('circle');
@@ -97,21 +112,23 @@ export class DiagramStyler {
       }
 
       if (rect) {
-        const isStadium = rect.getAttribute('rx') && parseInt(rect.getAttribute('rx') || '0') > 10;
+        const isStadium = rect.getAttribute('rx') && parseInt(rect.getAttribute('rx') || '0', 10) > 10;
         if (isStadium) {
           // Visio Start / End Capsule
           rect.style.fill = 'url(#visio-start-grad)';
-          rect.style.stroke = '#34d399';
+          rect.style.stroke = '#10b981';
           rect.style.strokeWidth = '2px';
           rect.setAttribute('filter', 'url(#visio-shadow)');
+          if (text) (text as SVGElement).style.fill = '#ffffff';
         } else {
           // Visio Corporate Process Box
           rect.setAttribute('rx', '10');
           rect.setAttribute('ry', '10');
           rect.style.fill = 'url(#visio-process-grad)';
-          rect.style.stroke = '#3b82f6';
+          rect.style.stroke = isLight ? '#2563eb' : isSepia ? '#92400e' : '#3b82f6';
           rect.style.strokeWidth = '1.75px';
           rect.setAttribute('filter', 'url(#visio-shadow)');
+          if (text) (text as SVGElement).style.fill = isLight ? '#0f172a' : isSepia ? '#433422' : '#f8fafc';
         }
       } else if (polygon) {
         // Visio Decision Diamond
@@ -119,25 +136,113 @@ export class DiagramStyler {
         polygon.style.stroke = '#fbbf24';
         polygon.style.strokeWidth = '2px';
         polygon.setAttribute('filter', 'url(#visio-shadow)');
+        if (text) (text as SVGElement).style.fill = '#ffffff';
       } else if (circle) {
         circle.style.fill = 'url(#visio-start-grad)';
         circle.style.stroke = '#10b981';
         circle.setAttribute('filter', 'url(#visio-shadow)');
+        if (text) (text as SVGElement).style.fill = '#ffffff';
       }
     });
 
     // Style edge paths and arrows
     const paths = svg.querySelectorAll('.flowchart-link, path.link');
     paths.forEach((p) => {
-      (p as SVGElement).style.stroke = '#64748b';
+      (p as SVGElement).style.stroke = isLight ? '#64748b' : isSepia ? '#7d6b53' : '#94a3b8';
       (p as SVGElement).style.strokeWidth = '1.8px';
+    });
+  }
+
+  /**
+   * Sequence Diagrams -> High-Contrast Architecture Fidelity
+   */
+  private static enhanceSequence(svg: SVGSVGElement, isLight: boolean, isSepia: boolean): void {
+    const textColor = isLight ? '#0f172a' : isSepia ? '#433422' : '#f8fafc';
+    const accentColor = isLight ? '#2563eb' : isSepia ? '#92400e' : '#3b82f6';
+    const borderColor = isLight ? '#cbd5e1' : isSepia ? '#dfcaa2' : '#334155';
+
+    // 1. Message texts between lifelines
+    const messageTexts = svg.querySelectorAll<SVGTextElement>('.messageText');
+    messageTexts.forEach((msg) => {
+      msg.style.fill = textColor;
+      msg.style.color = textColor;
+      msg.style.fontFamily = 'Readex Pro, system-ui, sans-serif';
+      msg.style.fontWeight = '600';
+      msg.style.fontSize = '13px';
+    });
+
+    // 2. Sequence numbers
+    const seqNumbers = svg.querySelectorAll<SVGTextElement>('.sequenceNumber');
+    seqNumbers.forEach((sn) => {
+      sn.style.fill = '#ffffff';
+      sn.style.fontWeight = '700';
+      sn.style.fontSize = '11px';
+    });
+
+    const seqRects = svg.querySelectorAll<SVGRectElement>('rect.sequenceNumber');
+    seqRects.forEach((sr) => {
+      sr.style.fill = accentColor;
+      sr.setAttribute('rx', '4');
+      sr.setAttribute('ry', '4');
+    });
+
+    // 3. Message lines & Arrowheads
+    const messageLines = svg.querySelectorAll<SVGLineElement>('.messageLine0, .messageLine1');
+    messageLines.forEach((ml) => {
+      ml.style.stroke = accentColor;
+      ml.style.strokeWidth = '1.75px';
+    });
+
+    const arrowheads = svg.querySelectorAll<SVGPathElement>('#arrowhead path, #crosshead path');
+    arrowheads.forEach((ah) => {
+      ah.style.fill = accentColor;
+      ah.style.stroke = accentColor;
+    });
+
+    // 4. Actor boxes & Lifelines
+    const actors = svg.querySelectorAll<SVGGElement>('.actor');
+    actors.forEach((act) => {
+      const rect = act.querySelector('rect');
+      const text = act.querySelector('text');
+      if (rect) {
+        rect.style.fill = accentColor;
+        rect.style.stroke = isLight ? '#1d4ed8' : isSepia ? '#78350f' : '#60a5fa';
+        rect.style.strokeWidth = '1.5px';
+        rect.setAttribute('rx', '8');
+        rect.setAttribute('ry', '8');
+        rect.setAttribute('filter', 'url(#visio-shadow)');
+      }
+      if (text) {
+        text.style.fill = '#ffffff';
+        text.style.fontWeight = '600';
+        text.style.fontSize = '13px';
+      }
+    });
+
+    const actorLines = svg.querySelectorAll<SVGLineElement>('.actor-line');
+    actorLines.forEach((al) => {
+      al.style.stroke = borderColor;
+      al.style.strokeWidth = '1.5px';
+      al.style.strokeDasharray = '4, 4';
+    });
+
+    // 5. Actor man (stick figure)
+    const actorManTexts = svg.querySelectorAll<SVGTextElement>('.actor-man text');
+    actorManTexts.forEach((amt) => {
+      amt.style.fill = textColor;
+      amt.style.fontWeight = '600';
+    });
+    const actorManFigures = svg.querySelectorAll<SVGElement>('.actor-man circle, .actor-man line');
+    actorManFigures.forEach((amf) => {
+      amf.style.stroke = accentColor;
+      amf.style.strokeWidth = '2px';
     });
   }
 
   /**
    * Mindmap -> Obsidian & Miro Organic Palette
    */
-  private static enhanceMindmap(svg: SVGSVGElement): void {
+  private static enhanceMindmap(svg: SVGSVGElement, _isLight: boolean, _isSepia: boolean): void {
     const mindmapNodes = svg.querySelectorAll('.mindmap-node');
     const branchColors = [
       { fill: '#059669', stroke: '#34d399' }, // Emerald
@@ -193,11 +298,15 @@ export class DiagramStyler {
   /**
    * Gantt -> Microsoft Project Executive Timeline
    */
-  private static enhanceGantt(svg: SVGSVGElement): void {
+  private static enhanceGantt(svg: SVGSVGElement, isLight: boolean, isSepia: boolean): void {
+    const textColor = isLight ? '#0f172a' : isSepia ? '#433422' : '#f8fafc';
+    const mutedColor = isLight ? '#64748b' : isSepia ? '#7d6b53' : '#94a3b8';
+    const gridColor = isLight ? '#e2e8f0' : isSepia ? '#dfcaa2' : '#334155';
+
     // Project Title
     const title = svg.querySelector('.titleText');
     if (title) {
-      (title as SVGElement).style.fill = '#f8fafc';
+      (title as SVGElement).style.fill = textColor;
       (title as SVGElement).style.fontWeight = '700';
       (title as SVGElement).style.fontSize = '16px';
     }
@@ -222,7 +331,7 @@ export class DiagramStyler {
     // Axis date text
     const dateTicks = svg.querySelectorAll('.tick text');
     dateTicks.forEach((dt) => {
-      (dt as SVGElement).style.fill = '#94a3b8';
+      (dt as SVGElement).style.fill = mutedColor;
       (dt as SVGElement).style.fontWeight = '500';
       (dt as SVGElement).style.fontSize = '11px';
     });
@@ -230,7 +339,7 @@ export class DiagramStyler {
     // Grid lines
     const gridLines = svg.querySelectorAll('.grid .tick line');
     gridLines.forEach((gl) => {
-      (gl as SVGElement).style.stroke = '#334155';
+      (gl as SVGElement).style.stroke = gridColor;
       (gl as SVGElement).style.strokeDasharray = '4 4';
     });
 
@@ -244,9 +353,11 @@ export class DiagramStyler {
   }
 
   /**
-   * Git Graph -> Clean GitHub / GitKraken Tree
+   * Git Graph -> Clean GitHub Tree with Mathematical Anti-Collision Staggering
    */
-  private static enhanceGitGraph(svg: SVGSVGElement): void {
+  private static enhanceGitGraph(svg: SVGSVGElement, isLight: boolean, isSepia: boolean): void {
+    const textColor = isLight ? '#0f172a' : isSepia ? '#433422' : '#f8fafc';
+
     // 1. Remove opaque grey boxes behind commit labels
     const commitLabelBkgs = svg.querySelectorAll('.commit-label-bkg');
     commitLabelBkgs.forEach((bkg) => {
@@ -254,13 +365,24 @@ export class DiagramStyler {
       (bkg as SVGElement).style.opacity = '0';
     });
 
-    // 2. Commit labels: crisp text with drop-shadow
-    const commitLabels = svg.querySelectorAll('.commit-label text');
-    commitLabels.forEach((label) => {
-      (label as SVGElement).style.fill = '#f8fafc';
-      (label as SVGElement).style.fontWeight = '600';
-      (label as SVGElement).style.fontSize = '11px';
-      (label as SVGElement).style.textShadow = '0 2px 4px rgba(0,0,0,0.95)';
+    // 2. Commit labels: Anti-collision staggering & theme color
+    const commitLabels = svg.querySelectorAll<SVGTextElement>('.commit-label text');
+    commitLabels.forEach((label, idx) => {
+      label.style.fill = textColor;
+      label.style.fontWeight = '600';
+      label.style.fontSize = '11px';
+      label.style.fontFamily = 'Readex Pro, system-ui, sans-serif';
+
+      if (!isLight && !isSepia) {
+        label.style.textShadow = '0 2px 4px rgba(0,0,0,0.95)';
+      } else {
+        label.style.textShadow = 'none';
+      }
+
+      // Stagger vertical offsets for consecutive commits to eliminate horizontal text collision
+      const currentDy = parseFloat(label.getAttribute('dy') || '0');
+      const offset = (idx % 2 === 1) ? 14 : -6;
+      label.setAttribute('dy', `${currentDy + offset}px`);
     });
 
     // 3. Branch labels: rounded pills
@@ -272,6 +394,7 @@ export class DiagramStyler {
         rect.setAttribute('rx', '8');
         rect.setAttribute('ry', '8');
         rect.style.strokeWidth = '1.5px';
+        rect.setAttribute('filter', 'url(#visio-shadow)');
       }
       if (text) {
         (text as SVGElement).style.fill = '#ffffff';

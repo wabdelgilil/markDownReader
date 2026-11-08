@@ -127,7 +127,7 @@ export class DiagramDispatcher {
         <div class="absolute top-2 left-2 z-10 text-[10px] text-white/50 bg-black/40 px-2 py-1 rounded backdrop-blur-xs select-none">
           انقر على الدوائر للطي والفرد • اسحب بالفأرة للتحريك • عجلة الفأرة للتكبير
         </div>
-        <svg class="w-full h-full cursor-grab active:cursor-grabbing select-none" id="markmap-target-${Date.now()}"></svg>
+        <svg class="w-full h-full cursor-grab active:cursor-grabbing select-none markmap" id="markmap-target-${Date.now()}"></svg>
       </div>
     `;
 
@@ -175,6 +175,14 @@ export class DiagramDispatcher {
       }
     }
 
+    const currentTheme = (typeof document !== 'undefined'
+      ? document.documentElement.getAttribute('data-theme')
+      : 'dark') || 'dark';
+    const isLight = currentTheme === 'light';
+    const isSepia = currentTheme === 'sepia';
+    const legendColor = isLight ? '#334155' : isSepia ? '#57534e' : '#94a3b8';
+    const tooltipBg = isLight ? '#0f172a' : '#020617';
+
     container.innerHTML = `
       <div class="w-full max-w-lg mx-auto p-4 flex flex-col items-center justify-center select-none" dir="ltr" style="direction: ltr !important;">
         <h4 class="font-bold text-sm text-theme-text mb-4 text-center">${title}</h4>
@@ -202,7 +210,7 @@ export class DiagramDispatcher {
               '#ec4899', // Pink
               '#06b6d4', // Cyan
             ],
-            borderColor: 'rgba(255, 255, 255, 0.1)',
+            borderColor: isLight ? '#ffffff' : 'rgba(255, 255, 255, 0.1)',
             borderWidth: 2,
             hoverOffset: 8,
           },
@@ -215,13 +223,13 @@ export class DiagramDispatcher {
           legend: {
             position: 'bottom',
             labels: {
-              color: '#94a3b8',
+              color: legendColor,
               font: { family: 'Readex Pro, sans-serif', size: 12 },
               padding: 16,
             },
           },
           tooltip: {
-            backgroundColor: '#0f172a',
+            backgroundColor: tooltipBg,
             titleFont: { family: 'Readex Pro, sans-serif' },
             bodyFont: { family: 'Readex Pro, sans-serif' },
             padding: 10,

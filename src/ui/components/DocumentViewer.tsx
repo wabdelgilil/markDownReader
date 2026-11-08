@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { ParsedDocument } from '../../core/types';
+import { ParsedDocument, ReadingTheme } from '../../core/types';
 import { DiagramEngine } from '../../core/diagrams/mermaid';
 import { FileQuestion, FolderOpen, Sparkles } from 'lucide-react';
 import { documentStore } from '../../services/document.store';
@@ -8,6 +8,7 @@ import { webAdapter } from '../../adapters/web.adapter';
 interface DocumentViewerProps {
   document: ParsedDocument | null;
   diagrams: Map<string, string>;
+  theme?: ReadingTheme;
   onLoadSample: () => void;
   onFocusDiagram?: (svgHtml: string, rawCode: string) => void;
 }
@@ -15,17 +16,18 @@ interface DocumentViewerProps {
 export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   document,
   diagrams,
+  theme,
   onLoadSample,
   onFocusDiagram,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Trigger Mermaid SVG rendering whenever the document or diagrams change
+  // Trigger Mermaid SVG rendering whenever the document, diagrams, or theme change
   useEffect(() => {
     if (containerRef.current && diagrams.size > 0) {
       DiagramEngine.renderDiagrams(containerRef.current, diagrams);
     }
-  }, [document?.html, diagrams]);
+  }, [document?.html, diagrams, theme]);
 
   // Handle Diagram Zoom, SVG Export, and Notion Code Copy Buttons via event delegation
   const handleContainerClick = (e: React.MouseEvent<HTMLDivElement>) => {

@@ -136,6 +136,7 @@ export const App: React.FC = () => {
         <DocumentViewer
           document={activeTab?.parsed || null}
           diagrams={documentStore.getActiveDiagrams()}
+          theme={theme}
           onLoadSample={handleLoadSample}
           onFocusDiagram={(svgHtml, rawCode) => setFocusedDiagram({ svgHtml, rawCode })}
         />
