@@ -105,3 +105,135 @@ article th {
 article input[type="checkbox"] {
   @apply rounded border-theme-border text-theme-accent focus:ring-0 ml-2;
 }
+
+/* Notion-Style Code Block */
+.notion-code-card {
+  direction: ltr !important;
+  text-align: left !important;
+}
+.notion-code-card pre,
+.notion-code-card code {
+  direction: ltr !important;
+  text-align: left !important;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace !important;
+}
+
+/* =========================================================
+   Mermaid High-Fidelity Theming: Obsidian & Modern Visuals
+   ========================================================= */
+
+/* Git Graph: Clean line connections, drop grey label blocks */
+.mermaid-target .commit-label-bkg {
+  display: none !important;
+  opacity: 0 !important;
+}
+.mermaid-target .commit-label text {
+  fill: #f8fafc !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.95)) !important;
+}
+.mermaid-target .branch-label text {
+  fill: #ffffff !important;
+  font-weight: 700 !important;
+  font-size: 11px !important;
+}
+.mermaid-target .branch-label rect {
+  rx: 8px !important;
+  ry: 8px !important;
+  stroke-width: 1.5px !important;
+}
+
+/* Obsidian-Style Mindmap: Vibrant organic node pills */
+.mermaid-target .mindmap-node circle {
+  fill: #4f46e5 !important;
+  stroke: #818cf8 !important;
+  stroke-width: 3px !important;
+  filter: drop-shadow(0 4px 16px rgba(99, 102, 241, 0.45)) !important;
+}
+.mermaid-target .mindmap-node text {
+  fill: #ffffff !important;
+  font-weight: 600 !important;
+  font-size: 12px !important;
+}
+.mermaid-target .mindmap-node rect {
+  rx: 14px !important;
+  ry: 14px !important;
+  stroke-width: 2px !important;
+  filter: drop-shadow(0 3px 10px rgba(0, 0, 0, 0.4)) !important;
+}
+
+/* Branch palette mapping for Mindmap */
+.mermaid-target .mindmap-node.section-0 rect,
+.mermaid-target .mindmap-node.section-root + g .section-0 rect {
+  fill: #059669 !important;
+  stroke: #34d399 !important;
+}
+.mermaid-target .mindmap-node.section-1 rect {
+  fill: #7c3aed !important;
+  stroke: #a78bfa !important;
+}
+.mermaid-target .mindmap-node.section-2 rect {
+  fill: #d97706 !important;
+  stroke: #fbbf24 !important;
+}
+.mermaid-target .mindmap-node.section-3 rect {
+  fill: #0891b2 !important;
+  stroke: #22d3ee !important;
+}
+.mermaid-target .mindmap-node.section-4 rect {
+  fill: #e11d48 !important;
+  stroke: #fb7185 !important;
+}
+
+/* Gantt Chart: High-contrast executive styling */
+.mermaid-target .titleText {
+  fill: var(--color-text) !important;
+  font-size: 16px !important;
+  font-weight: 700 !important;
+}
+.mermaid-target .tick text {
+  fill: var(--color-muted) !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+}
+.mermaid-target .grid .tick line {
+  stroke: var(--color-border) !important;
+  stroke-dasharray: 4, 4 !important;
+  opacity: 0.7 !important;
+}
+.mermaid-target .taskText,
+.mermaid-target .taskTextOutsideRight {
+  fill: #ffffff !important;
+  font-weight: 600 !important;
+  font-size: 12px !important;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.8)) !important;
+}
+.mermaid-target rect.task {
+  rx: 6px !important;
+  ry: 6px !important;
+  fill: #2563eb !important;
+  stroke: #60a5fa !important;
+  stroke-width: 1.5px !important;
+}
+.mermaid-target rect.task.active0,
+.mermaid-target rect.task.active1 {
+  fill: #059669 !important;
+  stroke: #34d399 !important;
+}
+.mermaid-target rect.task.done0,
+.mermaid-target rect.task.done1 {
+  fill: #475569 !important;
+  stroke: #64748b !important;
+}
+.mermaid-target rect.task.crit0,
+.mermaid-target rect.task.crit1 {
+  fill: #e11d48 !important;
+  stroke: #fb7185 !important;
+}
+.mermaid-target line.today {
+  stroke: #ef4444 !important;
+  stroke-width: 2.5px !important;
+  stroke-dasharray: 4, 2 !important;
+}
+

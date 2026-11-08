@@ -25,8 +25,31 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     }
   }, [document?.html, diagrams]);
 
-  // Handle Diagram Zoom & Export Buttons via event delegation
+  // Handle Diagram Zoom, SVG Export, and Notion Code Copy Buttons via event delegation
   const handleContainerClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    // 1. Check for Code Copy Button
+    const copyBtn = (e.target as HTMLElement).closest('.copy-code-btn') as HTMLElement;
+    if (copyBtn) {
+      const encodedCode = copyBtn.getAttribute('data-code');
+      if (encodedCode) {
+        const rawCode = decodeURIComponent(encodedCode);
+        navigator.clipboard.writeText(rawCode).then(() => {
+          const btnText = copyBtn.querySelector('.btn-text');
+          if (btnText) {
+            const originalText = btnText.textContent;
+            btnText.textContent = 'تم النسخ! ✓';
+            copyBtn.classList.add('text-emerald-400', 'border-emerald-500/50');
+            setTimeout(() => {
+              btnText.textContent = originalText;
+              copyBtn.classList.remove('text-emerald-400', 'border-emerald-500/50');
+            }, 2000);
+          }
+        });
+      }
+      return;
+    }
+
+    // 2. Check for Diagram Zoom & Export Buttons
     const target = (e.target as HTMLElement).closest('.diagram-action-btn') as HTMLElement;
     if (!target) return;
 

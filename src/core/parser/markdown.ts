@@ -69,6 +69,33 @@ export class MarkdownPipeline {
           const dir = BiDiArbitrator.detectDirection(text);
           return `<p class="markdown-paragraph my-3 leading-relaxed text-theme-text" dir="${dir}">${text}</p>`;
         },
+        code({ text, lang }: Tokens.Code): string {
+          const language = (lang || 'code').trim();
+          const escapedCode = text
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+          const encodedRaw = encodeURIComponent(text);
+
+          return `<div class="notion-code-card my-6 rounded-2xl border border-theme-border bg-theme-surface/90 shadow-md overflow-hidden select-text" dir="ltr" style="direction: ltr !important; text-align: left !important;">
+            <div class="flex items-center justify-between px-4 py-2.5 border-b border-theme-border/70 bg-theme-bg/80 text-xs font-mono select-none" dir="ltr">
+              <div class="flex items-center gap-2">
+                <span class="inline-block w-2.5 h-2.5 rounded-full bg-rose-500/80"></span>
+                <span class="inline-block w-2.5 h-2.5 rounded-full bg-amber-500/80"></span>
+                <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500/80"></span>
+                <span class="ml-2 px-2 py-0.5 rounded font-semibold text-[11px] uppercase tracking-wider bg-theme-accent/15 text-theme-accent border border-theme-accent/30">${language}</span>
+              </div>
+              <button class="copy-code-btn flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-sans font-medium text-theme-muted hover:text-theme-text hover:bg-theme-surface border border-theme-border/60 transition-all cursor-pointer active:scale-95" data-code="${encodedRaw}" title="نسخ الكود إلى الحافظة">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                <span class="btn-text">نسخ الكود</span>
+              </button>
+            </div>
+            <div class="p-4 overflow-x-auto text-left font-mono text-xs md:text-sm leading-relaxed" dir="ltr" style="direction: ltr !important; text-align: left !important;">
+              <pre class="m-0 p-0 font-mono" style="direction: ltr !important; text-align: left !important;"><code class="language-${language}" style="direction: ltr !important; text-align: left !important;">${escapedCode}</code></pre>
+            </div>
+          </div>`;
+        },
       },
     });
 
