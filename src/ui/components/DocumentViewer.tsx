@@ -33,6 +33,60 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     }
   }, [document?.html, diagrams, theme, diagramStyleVersion]);
 
+  // Enable smooth mouse drag-to-pan on all inline diagram targets
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    let isDown = false;
+    let startX = 0;
+    let startY = 0;
+    let scrollLeft = 0;
+    let scrollTop = 0;
+    let activeTarget: HTMLElement | null = null;
+
+    const onMouseDown = (e: MouseEvent) => {
+      const target = (e.target as HTMLElement).closest('.mermaid-target') as HTMLElement;
+      if (!target || (e.target as HTMLElement).closest('.diagram-action-btn')) return;
+      isDown = true;
+      activeTarget = target;
+      target.style.cursor = 'grabbing';
+      startX = e.pageX - target.offsetLeft;
+      startY = e.pageY - target.offsetTop;
+      scrollLeft = target.scrollLeft;
+      scrollTop = target.scrollTop;
+    };
+
+    const onMouseMove = (e: MouseEvent) => {
+      if (!isDown || !activeTarget) return;
+      e.preventDefault();
+      const x = e.pageX - activeTarget.offsetLeft;
+      const y = e.pageY - activeTarget.offsetTop;
+      const walkX = (x - startX) * 1.2;
+      const walkY = (y - startY) * 1.2;
+      activeTarget.scrollLeft = scrollLeft - walkX;
+      activeTarget.scrollTop = scrollTop - walkY;
+    };
+
+    const onMouseUp = () => {
+      if (activeTarget) {
+        activeTarget.style.cursor = 'grab';
+      }
+      isDown = false;
+      activeTarget = null;
+    };
+
+    container.addEventListener('mousedown', onMouseDown);
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+
+    return () => {
+      container.removeEventListener('mousedown', onMouseDown);
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    };
+  }, [document?.html]);
+
   // Handle Diagram Zoom, SVG Export, and Notion Code Copy Buttons via event delegation
   const handleContainerClick = (e: React.MouseEvent<HTMLDivElement>) => {
     // 1. Check for Code Copy Button

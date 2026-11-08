@@ -5,6 +5,11 @@
 /* All Mermaid Diagram Targets */
 .mermaid-target {
   font-family: 'Readex Pro', system-ui, sans-serif !important;
+  cursor: grab;
+  user-select: none;
+}
+.mermaid-target:active {
+  cursor: grabbing;
 }
 .mermaid-target text {
   font-family: 'Readex Pro', system-ui, sans-serif !important;

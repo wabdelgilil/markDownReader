@@ -8,8 +8,6 @@
 
 | ID | Task Name | Status | Priority | Execution Plan File |
 | :--- | :--- | :--- | :--- | :--- |
-| **TSK-05** | Enhanced Diagram Pan & Canvas Zoom Gestures | `[-] Pending` | High | `project_management/tasks/task_05_canvas_gestures.md` |
-| **TSK-06** | Local Workspace Folder Tree & File Drag-and-Drop | `[-] Pending` | High | `project_management/tasks/task_06_file_tree.md` |
 | **TSK-07** | Desktop Native Host Adapter (Tauri 2.0 Integration) | `[-] Pending` | High | `project_management/tasks/task_07_tauri_adapter.md` |
 
 ---

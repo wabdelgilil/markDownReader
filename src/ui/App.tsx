@@ -6,6 +6,8 @@ import { DiagnosticsDrawer } from './components/DiagnosticsDrawer';
 import { PresentationView } from './components/PresentationView';
 import { DiagramModal } from './components/DiagramModal';
 import { DiagramThemeModal } from './components/DiagramThemeModal';
+import { WorkspaceTree } from './components/WorkspaceTree';
+import { FileDropOverlay } from './components/FileDropOverlay';
 import { ThemeService } from '../services/theme.service';
 import { I18nService } from '../services/i18n.service';
 import { FullscreenService } from '../services/fullscreen.service';
@@ -20,6 +22,7 @@ export const App: React.FC = () => {
   const [showPresentation, setShowPresentation] = useState(false);
   const [showDiagnostics, setShowDiagnostics] = useState(false);
   const [showDiagramThemes, setShowDiagramThemes] = useState(false);
+  const [showWorkspaceTree, setShowWorkspaceTree] = useState(false);
   const [diagramStyleVersion, setDiagramStyleVersion] = useState(0);
   const [activeHeadingId, setActiveHeadingId] = useState<string | undefined>();
   const [focusedDiagram, setFocusedDiagram] = useState<{ svgHtml: string; rawCode: string } | null>(null);
@@ -129,11 +132,18 @@ export const App: React.FC = () => {
         onToggleDiagnostics={() => setShowDiagnostics((prev) => !prev)}
         onExportFormat={handleExportFormat}
         onOpenDiagramThemes={() => setShowDiagramThemes(true)}
+        onToggleWorkspace={() => setShowWorkspaceTree((prev) => !prev)}
         hasOpenTabs={activeTab !== null}
+        hasOpenWorkspace={showWorkspaceTree}
       />
 
       {/* Main Workspace Body */}
       <div className="flex-1 flex overflow-hidden">
+        {/* Workspace Directory Tree Explorer */}
+        {showWorkspaceTree && (
+          <WorkspaceTree onClose={() => setShowWorkspaceTree(false)} />
+        )}
+
         {/* Dynamic Table of Contents (Outline) */}
         {activeTab?.parsed && (
           <DynamicOutline
@@ -153,6 +163,9 @@ export const App: React.FC = () => {
           onFocusDiagram={(svgHtml, rawCode) => setFocusedDiagram({ svgHtml, rawCode })}
         />
       </div>
+
+      {/* Global Drag-and-Drop Dropzone Overlay */}
+      <FileDropOverlay />
 
       {/* Diagram Theming & Custom Palette Modal */}
       <DiagramThemeModal

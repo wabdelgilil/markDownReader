@@ -17,7 +17,8 @@ import {
   Minimize,
   FileCode,
   FileType,
-  Printer
+  Printer,
+  FolderTree
 } from 'lucide-react';
 import { ReadingTheme } from '../../core/types';
 import { documentStore } from '../../services/document.store';
@@ -33,7 +34,9 @@ interface NavbarProps {
   onToggleDiagnostics: () => void;
   onExportFormat: (format: ExportFormat) => void;
   onOpenDiagramThemes: () => void;
+  onToggleWorkspace?: () => void;
   hasOpenTabs: boolean;
+  hasOpenWorkspace?: boolean;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -43,7 +46,9 @@ export const Navbar: React.FC<NavbarProps> = ({
   onToggleDiagnostics,
   onExportFormat,
   onOpenDiagramThemes,
+  onToggleWorkspace,
   hasOpenTabs,
+  hasOpenWorkspace,
 }) => {
   const { t, locale, toggleLocale } = useI18n();
   const [isFullscreen, setIsFullscreen] = useState(FullscreenService.isFullscreen());
@@ -138,6 +143,20 @@ export const Navbar: React.FC<NavbarProps> = ({
           >
             <FolderOpen className="w-3.5 h-3.5 text-theme-accent" />
             <span className="hidden md:inline">{t.navbar.openFile}</span>
+          </button>
+
+          {/* Workspace Folder Tree Button */}
+          <button
+            onClick={onToggleWorkspace}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer ${
+              hasOpenWorkspace
+                ? 'bg-theme-accent/15 text-theme-accent border-theme-accent/40 font-semibold'
+                : 'bg-theme-bg hover:bg-theme-border/60 text-theme-text border-theme-border'
+            }`}
+            title={locale === 'ar' ? 'استعراض شجرة المجلدات ومساحة العمل' : 'Workspace Folder Tree Explorer'}
+          >
+            <FolderTree className="w-3.5 h-3.5 text-amber-400" />
+            <span className="hidden md:inline">{locale === 'ar' ? 'المجلد' : 'Folder'}</span>
           </button>
 
           {hasOpenTabs && (
