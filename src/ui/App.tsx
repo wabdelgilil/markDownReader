@@ -7,8 +7,10 @@ import { PresentationView } from './components/PresentationView';
 import { DiagramModal } from './components/DiagramModal';
 import { DiagramThemeModal } from './components/DiagramThemeModal';
 import { ThemeService } from '../services/theme.service';
+import { I18nService } from '../services/i18n.service';
+import { FullscreenService } from '../services/fullscreen.service';
 import { documentStore } from '../services/document.store';
-import { HtmlExporterService } from '../services/exporter.service';
+import { ExportDispatcher, ExportFormat } from '../services/exporters';
 import { SAMPLE_MARKDOWN } from '../core/sample';
 import { ReadingTheme } from '../core/types';
 
@@ -22,10 +24,11 @@ export const App: React.FC = () => {
   const [activeHeadingId, setActiveHeadingId] = useState<string | undefined>();
   const [focusedDiagram, setFocusedDiagram] = useState<{ svgHtml: string; rawCode: string } | null>(null);
 
-  // Initialize theme on mount
+  // Initialize theme and language on mount
   useEffect(() => {
     const initialTheme = ThemeService.initialize();
     setTheme(initialTheme);
+    I18nService.initialize();
   }, []);
 
   // Subscribe to document store changes
@@ -39,7 +42,10 @@ export const App: React.FC = () => {
   // Global Keyboard Shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'w') {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'f') {
+        e.preventDefault();
+        FullscreenService.toggleFullscreen();
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'w') {
         e.preventDefault();
         if (activeTab) {
           documentStore.closeTab(activeTab.id);
@@ -94,13 +100,14 @@ export const App: React.FC = () => {
     documentStore.openTab('دليل_المحطة_التقني.md', 'sample://guide.md', SAMPLE_MARKDOWN);
   };
 
-  const handleExportHtml = () => {
+  const handleExportFormat = (format: ExportFormat) => {
     if (activeTab?.parsed) {
-      HtmlExporterService.exportSingleFileHtml(
-        activeTab.parsed,
+      ExportDispatcher.export(format, activeTab.parsed, {
+        filename: activeTab.name,
         theme,
-        documentStore.getActiveDiagrams()
-      );
+        locale: I18nService.getLocale(),
+        diagrams: documentStore.getActiveDiagrams(),
+      });
     }
   };
 
@@ -120,7 +127,7 @@ export const App: React.FC = () => {
         onThemeChange={handleThemeChange}
         onTogglePresentation={() => setShowPresentation(true)}
         onToggleDiagnostics={() => setShowDiagnostics((prev) => !prev)}
-        onExportHtml={handleExportHtml}
+        onExportFormat={handleExportFormat}
         onOpenDiagramThemes={() => setShowDiagramThemes(true)}
         hasOpenTabs={activeTab !== null}
       />

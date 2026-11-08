@@ -16,16 +16,67 @@ status: معتمد للإنتاج والعروض الترويجية
 
 ---
 
-## 1. التوجيه الذكي للنصوص العربية وعزل المصطلحات (BiDi & Punctuation Lock) 🌐
+## 1. التناغم الذكي بين اللغتين العربية والإنجليزية في مستند واحد (Bilingual Coexistence & BiDi Showcase) 🌐
 
-يعالج هذا القسم المعضلة الأزلية في محررات الماركداون التقليدية: **خلط الأوامر البرمجية والمسارات والكلمات اللاتينية داخل فقرات اللغة العربية**:
+تتميز محطة **MarkDownReader** بقدرة استثنائية على إدارة المستندات التقنية الهجينة التي تحتوي على نصوص عربية وأجنبية جنباً إلى جنب، مع منح كل لغة خصائصها الطبيعية الكاملة (الاتجاه، الخط، المحاذاة، وعزل علامات الترقيم):
 
-عند كتابة أوامر سطر الأوامر مثل `git checkout -b feature/auth-system` أو تشغيل الخادم عبر `pnpm run dev --host 0.0.0.0`، يجب أن تظل الفقرة متسقة من اليمين لليسار، وتستقر علامات الترقيم (كالأقواس والنقاط والفواصل) في موضعها الصحيح تماماً بنهاية السطر.
+### أ. انسيابية اللغة العربية مع عزل الأكواد اللاتينية المضمنة (Arabic RTL with Inline LTR Code):
+عند قراءة توثيق تقني باللغة العربية، كثيراً ما تتداخل أوامر برمجية مثل `git checkout -b feature/auth-system` أو دوال مثل `documentStore.openTab(fileName, filePath, fileContent)` داخل سياق الجملة. في المحررات التقليدية، تنقلب الأقواس وتنتقل النقطة الختامية لبداية السطر مسببة تشوهاً بصرياً حاداً.
+
+هنا، يضمن محرك **BiDi Arbitrator** بقاء الفقرة من اليمين لليسار، مع استقرار الترقيم في مكانه الطبيعي تماماً:
+* عند استدعاء الدالة `authProvider.verifySession({ token: "Bearer eyJhbGci...", timeoutMs: 5000 })`، يعيد الخادم كائن `Promise<UserSession>` مباشرة.
+* مسار الملف في نظام التشغيل هو `C:\Users\Engineering\Workspace\markDownReader\src\main.tsx` وتتم قراءته بسلاسة دون ارتباك الفواصل المائلة.
+* المتغيرات البيئية مثل `VITE_API_ENDPOINT="https://api.enterprise.sa/v1"` تظهر بدقة هندسية متناهية.
 
 > [!NOTE]
-> يقوم محرك **BiDi Arbitrator** بعزل كتل الأكواد والرياضيات تلقائياً داخل وسوم `<bdi dir="ltr">` لمنع حدوث أي تشوه أو انعكاس في اتجاه الحروف وعلامات الترقيم.
+> يقوم النظام بعزل كل مصطلح لاتيني أو كود مضمن تلقائياً داخل وسم `<bdi dir="ltr">`؛ مما يمنع انتقال التأثير الاتجاهي للحروف اللاتينية إلى الكلمات العربية المحيطة بها.
 
-### قائمة التنبيهات المعتمدة (GitHub Alerts Spectrum):
+---
+
+### B. Autonomous English Technical Section (Pure LTR Block Flow):
+The reader automatically recognizes paragraphs and sections predominantly written in Latin scripts, seamlessly rendering them with native Left-to-Right (LTR) alignment, standard Western typography, and appropriate margin hierarchies:
+
+#### Architectural Overview & High-Throughput Processing Pipeline:
+The document station incorporates a modular zero-copy streaming parser capable of tokenizing complex CommonMark structures, nested mathematical environments, and interactive vector diagrams. 
+
+Key architectural components include:
+1. **Bi-Directional Lexer:** Analyzes script density per block to determine whether an element should flow `rtl` or `ltr`.
+2. **KaTeX Accelerator:** Pre-renders complex mathematical notation with zero Layout Shift (CLS = 0.00).
+3. **SVG Vector Styler:** Post-processes Mermaid canvases into clean enterprise architectures with dynamic lighting and anti-collision staggering.
+
+```json
+{
+  "system": "MarkDownReader",
+  "engine": "AST-Unified-Stream",
+  "bilingualSupport": {
+    "arabicRTL": true,
+    "englishLTR": true,
+    "inlineCodeIsolation": "BDI-Enforced",
+    "punctuationLock": "Active"
+  },
+  "performance": {
+    "renderTimeMs": 1.4,
+    "memoryFootprintMb": 38.2
+  }
+}
+```
+
+> [!TIP]
+> Notice how the blockquote above naturally aligns to the left with its border on the left side, matching English editorial standards, while the Arabic blockquotes throughout this document align to the right!
+
+---
+
+### ج. جدول المقارنة الثنائي بين اللغات (Bilingual Feature Matrix):
+
+| الخاصية التقنية (Feature) | المعالجة التقليدية (Standard Editors) | معالجة MarkDownReader الذكية |
+| :--- | :--- | :--- |
+| **Arabic Block Flow** | Mixed RTL/LTR confusion with broken commas | **Native RTL with Readex Pro Arabic** |
+| **English Technical Sections** | Forced into right-alignment awkwardly | **Clean Autonomous LTR Alignment** |
+| **Inline Code Tokens** | Brackets & semicolons invert `() {} ;` | **Strict `<bdi>` Isolation with Locked Punctuation** |
+| **Mixed Path Strings** | Slashes invert `C:\folder\file.md` | **Immutable LTR Geometry** |
+| **Dual-Language Outlines** | Numbers appear on the wrong side | **Direction-Adaptive Hierarchical TOC** |
+
+---
 
 > [!NOTE]
 > **ملاحظة تشغيلية:** يدعم النظام التخزين المؤقت الداخلي للمستندات لضمان التبديل الفوري بين التبويبات بدون أي تأخير.

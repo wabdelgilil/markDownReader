@@ -18,15 +18,15 @@ export interface DiagramClassification {
 }
 
 /**
- * Intelligent Multi-Engine Diagram Dispatcher
- * Automatically detects diagram intent and dispatches to the world-class specialized library:
- * - 'mindmap' -> Markmap (Obsidian D3 interactive folding tree)
- * - 'pie' / 'chart' -> Chart.js (Interactive animated analytics)
- * - 'flowchart' / 'sequence' / 'gitGraph' -> Mermaid with Visio / Enterprise styling
+ * Multi-Engine Diagram Dispatcher
+ * Routes diagram declarations to specialized rendering libraries:
+ * - 'mindmap' -> Markmap (D3 interactive folding tree)
+ * - 'pie' / 'chart' -> Chart.js (Interactive analytical charts)
+ * - 'flowchart' / 'sequence' / 'gitGraph' -> Mermaid with Enterprise SVG post-processing
  */
 export class DiagramDispatcher {
   /**
-   * Automatically classifies code block to pick the superior native engine.
+   * Classifies diagram source code to select the target renderer.
    */
   public static classify(code: string): DiagramClassification {
     const trimmed = code.trim().toLowerCase();
@@ -34,39 +34,39 @@ export class DiagramDispatcher {
     if (trimmed.startsWith('mindmap')) {
       return {
         type: 'markmap',
-        badge: '🧠 Obsidian Mindmap (Interactive)',
-        accentColor: '#8b5cf6', // Violet
+        badge: 'Mindmap (Interactive)',
+        accentColor: '#8b5cf6',
       };
     }
 
     if (trimmed.startsWith('pie')) {
       return {
         type: 'chartjs',
-        badge: '📊 Chart.js Analytics (Interactive)',
-        accentColor: '#3b82f6', // Blue
+        badge: 'Analytics Chart',
+        accentColor: '#3b82f6',
       };
     }
 
     if (trimmed.startsWith('gantt')) {
       return {
-        type: 'mermaid', // Rendered with our MS Project Gantt styler
-        badge: '📅 Microsoft Project Gantt',
-        accentColor: '#10b981', // Emerald
+        type: 'mermaid',
+        badge: 'Gantt Timeline',
+        accentColor: '#10b981',
       };
     }
 
     if (trimmed.startsWith('gitgraph')) {
       return {
         type: 'mermaid',
-        badge: '🔀 Git Tree (Interactive)',
-        accentColor: '#06b6d4', // Cyan
+        badge: 'Git History Tree',
+        accentColor: '#06b6d4',
       };
     }
 
     return {
       type: 'mermaid',
-      badge: '📐 Microsoft Visio Architecture',
-      accentColor: '#3b82f6', // Blue
+      badge: 'Architecture Flowchart',
+      accentColor: '#3b82f6',
     };
   }
 

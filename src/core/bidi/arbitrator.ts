@@ -1,7 +1,7 @@
 import { TextDirection } from '../types';
 
 /**
- * Intelligent Bi-Directional (BiDi) Text Arbitrator
+ * Bi-Directional (BiDi) Text Arbitrator
  * Provides block-level direction detection, inline code isolation, and punctuation locking.
  */
 export class BiDiArbitrator {

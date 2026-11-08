@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { DocumentHeading } from '../../core/types';
-import { ListTree, ChevronLeft, Search, X } from 'lucide-react';
+import { ListTree, ChevronLeft, ChevronRight, Search, X } from 'lucide-react';
+import { useI18n } from '../hooks/useI18n';
 
 interface DynamicOutlineProps {
   headings: DocumentHeading[];
@@ -13,10 +14,11 @@ export const DynamicOutline: React.FC<DynamicOutlineProps> = ({
   activeHeadingId,
   onSelectHeading,
 }) => {
+  const { t, locale } = useI18n();
   const [filterText, setFilterText] = useState('');
   const activeItemRef = useRef<HTMLButtonElement>(null);
 
-  // Smart Auto-Scroll: Keeps the active heading item centered/visible in the TOC sidebar
+  // Auto-scroll: Keeps the active heading item visible in the TOC sidebar
   useEffect(() => {
     if (activeItemRef.current) {
       activeItemRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -29,24 +31,24 @@ export const DynamicOutline: React.FC<DynamicOutlineProps> = ({
 
   if (headings.length === 0) {
     return (
-      <aside className="w-72 border-l border-theme-border bg-theme-surface/50 p-4 hidden lg:flex flex-col text-xs text-theme-muted shrink-0 h-full">
+      <aside className={`w-72 ${locale === 'ar' ? 'border-l' : 'border-r'} border-theme-border bg-theme-surface/50 p-4 hidden lg:flex flex-col text-xs text-theme-muted shrink-0 h-full`}>
         <div className="flex items-center gap-1.5 font-semibold text-theme-text mb-3">
           <ListTree className="w-4 h-4 text-theme-accent" />
-          <span>فهرس المستند</span>
+          <span>{t.outline.title}</span>
         </div>
-        <div className="py-8 text-center opacity-60">لا توجد عناوين في هذا المستند.</div>
+        <div className="py-8 text-center opacity-60">{t.outline.emptyText}</div>
       </aside>
     );
   }
 
   return (
-    <aside className="w-72 border-l border-theme-border bg-theme-surface/60 backdrop-blur-xs hidden lg:flex flex-col shrink-0 select-none h-full z-10">
+    <aside className={`w-72 ${locale === 'ar' ? 'border-l' : 'border-r'} border-theme-border bg-theme-surface/60 backdrop-blur-xs hidden lg:flex flex-col shrink-0 select-none h-full z-10`}>
       {/* Header with Title and Count */}
       <div className="p-3 border-b border-theme-border/60 bg-theme-bg/40">
         <div className="flex items-center justify-between font-semibold text-xs text-theme-text mb-2.5">
           <div className="flex items-center gap-2">
             <ListTree className="w-4 h-4 text-theme-accent" />
-            <span>فهرس المحتويات الذكي</span>
+            <span>{t.outline.title}</span>
           </div>
           <span className="text-[10px] px-1.5 py-0.5 rounded bg-theme-surface text-theme-muted border border-theme-border/60 font-mono">
             {headings.length}
@@ -55,18 +57,18 @@ export const DynamicOutline: React.FC<DynamicOutlineProps> = ({
 
         {/* Quick Search Filter */}
         <div className="relative flex items-center">
-          <Search className="w-3.5 h-3.5 absolute right-2.5 text-theme-muted pointer-events-none" />
+          <Search className={`w-3.5 h-3.5 absolute ${locale === 'ar' ? 'right-2.5' : 'left-2.5'} text-theme-muted pointer-events-none`} />
           <input
             type="text"
             value={filterText}
             onChange={(e) => setFilterText(e.target.value)}
-            placeholder="بحث في الفهرس..."
-            className="w-full bg-theme-bg text-theme-text text-xs pr-8 pl-7 py-1.5 rounded-lg border border-theme-border focus:border-theme-accent focus:outline-hidden transition-colors"
+            placeholder={t.outline.searchPlaceholder}
+            className={`w-full bg-theme-bg text-theme-text text-xs ${locale === 'ar' ? 'pr-8 pl-7' : 'pl-8 pr-7'} py-1.5 rounded-lg border border-theme-border focus:border-theme-accent focus:outline-hidden transition-colors`}
           />
           {filterText && (
             <button
               onClick={() => setFilterText('')}
-              className="absolute left-2 text-theme-muted hover:text-theme-text p-0.5 rounded"
+              className={`absolute ${locale === 'ar' ? 'left-2' : 'right-2'} text-theme-muted hover:text-theme-text p-0.5 rounded cursor-pointer`}
             >
               <X className="w-3 h-3" />
             </button>
@@ -74,40 +76,33 @@ export const DynamicOutline: React.FC<DynamicOutlineProps> = ({
         </div>
       </div>
 
-      {/* Independent Scrollable Outline List */}
-      <nav className="flex-1 overflow-y-auto p-2 flex flex-col gap-0.5 space-y-0.5">
+      {/* Headings Tree View */}
+      <nav className="flex-1 overflow-y-auto p-2 space-y-0.5">
         {filteredHeadings.map((heading) => {
           const isActive = activeHeadingId === heading.id;
-          const indentClass =
-            heading.level === 1 ? 'pr-2 font-bold text-theme-text' :
-            heading.level === 2 ? 'pr-4 font-semibold text-theme-text/90' :
-            heading.level === 3 ? 'pr-6 text-theme-muted' : 'pr-8 text-theme-muted/80 text-[11px]';
+          const indent = (heading.level - 1) * 12;
 
           return (
             <button
               key={heading.id}
               ref={isActive ? activeItemRef : null}
               onClick={() => onSelectHeading(heading.id)}
-              className={`flex items-center justify-between text-right py-1.5 px-2.5 rounded-lg transition-all text-xs truncate group cursor-pointer ${indentClass} ${
+              style={{
+                [locale === 'ar' ? 'paddingRight' : 'paddingLeft']: `${indent + 8}px`,
+              }}
+              className={`w-full flex items-center justify-between py-1.5 px-2 rounded-lg text-xs text-start transition-all cursor-pointer ${
                 isActive
-                  ? 'bg-theme-accent/12 text-theme-accent font-semibold border-r-2 border-theme-accent'
-                  : 'hover:bg-theme-bg/80 hover:text-theme-text text-theme-muted'
+                  ? 'bg-theme-accent/15 text-theme-accent font-semibold border-r-2 border-theme-accent'
+                  : 'text-theme-muted hover:text-theme-text hover:bg-theme-bg/60 font-normal'
               }`}
-              title={heading.text}
             >
-              <span className="truncate">{heading.text}</span>
+              <span className="truncate flex-1">{heading.text}</span>
               {isActive && (
-                <ChevronLeft className="w-3.5 h-3.5 shrink-0 text-theme-accent mr-1" />
+                locale === 'ar' ? <ChevronLeft className="w-3.5 h-3.5 shrink-0 text-theme-accent" /> : <ChevronRight className="w-3.5 h-3.5 shrink-0 text-theme-accent" />
               )}
             </button>
           );
         })}
-
-        {filteredHeadings.length === 0 && (
-          <div className="py-6 text-center text-xs text-theme-muted">
-            لا توجد عناوين مطابقة للبحث
-          </div>
-        )}
       </nav>
     </aside>
   );

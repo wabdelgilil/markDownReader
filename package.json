@@ -2,6 +2,8 @@
   "name": "markdown-reader",
   "version": "1.0.0",
   "description": "Universal High-Performance Markdown Document Station with first-class RTL, Math, Diagrams, and Themes",
+  "author": "Engineering Core Team",
+  "license": "MIT",
   "private": true,
   "type": "module",
   "scripts": {

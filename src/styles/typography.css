@@ -1,0 +1,56 @@
+/* Rich Markdown Typography with Direction-Adaptive CSS Logical Properties */
+article h1 { 
+  @apply text-2xl md:text-3xl font-bold my-5 border-b border-theme-border pb-3 text-theme-text;
+  text-align: start;
+}
+article h2 { 
+  @apply text-xl md:text-2xl font-bold my-4 border-b border-theme-border pb-2 text-theme-text;
+  text-align: start;
+}
+article h3 { 
+  @apply text-lg md:text-xl font-semibold my-3 text-theme-text;
+  text-align: start;
+}
+article h4 { 
+  @apply text-base font-semibold my-2 text-theme-text;
+  text-align: start;
+}
+article p {
+  text-align: start;
+}
+article ul { 
+  @apply list-disc list-inside space-y-1.5 my-3;
+  padding-inline-start: 1rem;
+  text-align: start;
+}
+article ol { 
+  @apply list-decimal list-inside space-y-1.5 my-3;
+  padding-inline-start: 1rem;
+  text-align: start;
+}
+article li { 
+  @apply leading-relaxed;
+  text-align: start;
+}
+article blockquote { 
+  @apply bg-theme-surface p-3.5 my-4 italic text-theme-muted rounded-md;
+  border-inline-start: 4px solid var(--color-accent);
+  text-align: start;
+}
+article hr { 
+  @apply border-t border-theme-border my-6;
+}
+article table {
+  @apply w-full my-6 text-sm border-collapse bg-theme-surface border border-theme-border rounded-xl overflow-hidden;
+}
+article th, article td {
+  @apply py-2.5 px-4 border-b border-theme-border;
+  text-align: start;
+}
+article th {
+  @apply bg-theme-bg font-semibold text-xs tracking-wider uppercase text-theme-muted;
+}
+article input[type="checkbox"] {
+  @apply rounded border-theme-border text-theme-accent focus:ring-0;
+  margin-inline-end: 0.5rem;
+}

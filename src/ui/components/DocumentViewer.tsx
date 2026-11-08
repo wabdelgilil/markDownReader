@@ -1,9 +1,10 @@
 import React, { useEffect, useRef } from 'react';
 import { ParsedDocument, ReadingTheme } from '../../core/types';
 import { DiagramEngine } from '../../core/diagrams/mermaid';
-import { FileQuestion, FolderOpen, Sparkles } from 'lucide-react';
+import { FileQuestion, FolderOpen, BookOpen } from 'lucide-react';
 import { documentStore } from '../../services/document.store';
 import { webAdapter } from '../../adapters/web.adapter';
+import { useI18n } from '../hooks/useI18n';
 
 interface DocumentViewerProps {
   document: ParsedDocument | null;
@@ -22,6 +23,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   onLoadSample,
   onFocusDiagram,
 }) => {
+  const { t } = useI18n();
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Trigger Mermaid SVG rendering whenever the document, diagrams, theme, or diagram style change
@@ -104,9 +106,9 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
         <div className="w-16 h-16 rounded-2xl bg-theme-surface border border-theme-border flex items-center justify-center text-theme-accent mb-4 shadow-sm">
           <FileQuestion className="w-8 h-8 opacity-80" />
         </div>
-        <h2 className="text-xl font-bold text-theme-text mb-2">لا يوجد مستند مفتوح حالياً</h2>
+        <h2 className="text-xl font-bold text-theme-text mb-2">{t.viewer.emptyTitle}</h2>
         <p className="text-sm text-theme-muted max-w-md mb-6 leading-relaxed">
-          قم بفتح أي ملف ماركداون من جهازك للاستمتاع بالقراءة المتقدمة، دعم المعادلات الرياضية، المخططات التفاعلية، والتوجيه الذكي للغة العربية.
+          {t.viewer.emptySubtitle}
         </p>
         <div className="flex items-center gap-3">
           <button
@@ -116,17 +118,17 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
                 documentStore.openTab(file.name, file.path, file.content);
               }
             }}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-theme-accent text-white hover:bg-theme-accent-hover font-medium text-xs transition-colors shadow-sm"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-theme-accent text-white hover:bg-theme-accent-hover font-medium text-xs transition-colors shadow-sm cursor-pointer"
           >
             <FolderOpen className="w-4 h-4" />
-            <span>فتح ملف من الجهاز</span>
+            <span>{t.viewer.openFileBtn}</span>
           </button>
           <button
             onClick={onLoadSample}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-theme-surface border border-theme-border hover:bg-theme-border/60 text-theme-text font-medium text-xs transition-colors"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-theme-surface border border-theme-border hover:bg-theme-border/60 text-theme-text font-medium text-xs transition-colors cursor-pointer"
           >
-            <Sparkles className="w-4 h-4 text-amber-400" />
-            <span>عرض المستند التجريبي الشامل</span>
+            <BookOpen className="w-4 h-4 text-theme-accent" />
+            <span>{t.viewer.loadSampleBtn}</span>
           </button>
         </div>
       </div>

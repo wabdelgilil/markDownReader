@@ -1,0 +1,80 @@
+:root,
+[data-theme="light"] {
+  --color-bg: #fafafa;
+  --color-surface: #ffffff;
+  --color-border: #e4e4e7;
+  --color-text: #18181b;
+  --color-muted: #71717a;
+  --color-accent: #4f46e5;
+  --color-accent-hover: #4338ca;
+  --color-code-bg: #18181b;
+}
+
+[data-theme="dark"] {
+  --color-bg: #09090b;
+  --color-surface: #121215;
+  --color-border: #27272a;
+  --color-text: #f4f4f5;
+  --color-muted: #a1a1aa;
+  --color-accent: #6366f1;
+  --color-accent-hover: #818cf8;
+  --color-code-bg: #0d0d10;
+}
+
+[data-theme="sepia"] {
+  --color-bg: #f7f3e9;
+  --color-surface: #f0ead9;
+  --color-border: #ded5c2;
+  --color-text: #2c2217;
+  --color-muted: #786b59;
+  --color-accent: #9a4316;
+  --color-accent-hover: #7c3412;
+  --color-code-bg: #211c18;
+}
+
+[data-theme="terminal"] {
+  --color-bg: #050505;
+  --color-surface: #0a0d0a;
+  --color-border: #00ff6633;
+  --color-text: #00ff66;
+  --color-muted: #00aa44;
+  --color-accent: #00ff66;
+  --color-accent-hover: #33ff88;
+  --color-code-bg: #040805;
+}
+
+/* Base typography & scrollbar */
+html {
+  scroll-behavior: smooth;
+  font-family: 'Readex Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Custom sleek scrollbars */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-muted);
+}
+
+/* Terminal CRT Scanline subtle effect */
+[data-theme="terminal"] .terminal-scanline {
+  background: linear-gradient(
+    rgba(18, 16, 16, 0) 50%, 
+    rgba(0, 0, 0, 0.25) 50%
+  ), linear-gradient(
+    90deg,
+    rgba(255, 0, 0, 0.03),
+    rgba(0, 255, 0, 0.01),
+    rgba(0, 0, 255, 0.03)
+  );
+  background-size: 100% 3px, 3px 100%;
+}

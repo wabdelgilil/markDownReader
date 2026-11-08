@@ -2,8 +2,8 @@ import mermaid from 'mermaid';
 import { DiagramDispatcher } from './dispatcher';
 
 /**
- * Universal Diagram Engine with Intelligent Multi-Engine Dispatcher
- * Automatically detects whether to use Markmap (Obsidian), Chart.js, or Mermaid with Visio enhancements.
+ * Universal Diagram Engine with Multi-Engine Dispatcher
+ * Coordinates rendering between Markmap, Chart.js, and Mermaid with Enterprise SVG enhancements.
  */
 export class DiagramEngine {
   public static initialize(): void {
@@ -134,7 +134,7 @@ export class DiagramEngine {
           </div>
         </div>
         <div id="${id}" class="mermaid-target flex justify-center items-center min-h-[140px] overflow-auto" dir="ltr" style="direction: ltr !important;">
-          <div class="animate-pulse text-xs text-theme-muted py-6">جاري تشغيل المحرك المتخصص للمخطط...</div>
+          <div class="animate-pulse text-xs text-theme-muted py-6">جاري تحميل المخطط...</div>
         </div>
       </div>`;
     });
