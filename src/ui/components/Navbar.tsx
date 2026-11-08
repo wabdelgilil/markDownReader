@@ -10,7 +10,8 @@ import {
   Presentation, 
   Activity, 
   Download,
-  FolderOpen
+  FolderOpen,
+  Palette
 } from 'lucide-react';
 import { ReadingTheme } from '../../core/types';
 import { documentStore } from '../../services/document.store';
@@ -22,6 +23,7 @@ interface NavbarProps {
   onTogglePresentation: () => void;
   onToggleDiagnostics: () => void;
   onExportHtml: () => void;
+  onOpenDiagramThemes: () => void;
   hasOpenTabs: boolean;
 }
 
@@ -31,6 +33,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onTogglePresentation,
   onToggleDiagnostics,
   onExportHtml,
+  onOpenDiagramThemes,
   hasOpenTabs,
 }) => {
   const tabs = documentStore.getTabs();
@@ -113,6 +116,16 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
             </>
           )}
+
+          {/* Diagram Theming Customizer Button */}
+          <button
+            onClick={onOpenDiagramThemes}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-theme-bg hover:bg-theme-border/60 text-theme-text border border-theme-border transition-colors mr-1"
+            title="تخصيص نمط وألوان المخططات (Visio, Notion, Obsidian, Custom)"
+          >
+            <Palette className="w-3.5 h-3.5 text-amber-400" />
+            <span className="hidden md:inline">أنماط المخططات</span>
+          </button>
 
           {/* Theme Selector Menu */}
           <div className="flex items-center rounded-lg p-0.5 bg-theme-bg border border-theme-border mr-2">

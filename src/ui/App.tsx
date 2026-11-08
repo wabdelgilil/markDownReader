@@ -5,6 +5,7 @@ import { DocumentViewer } from './components/DocumentViewer';
 import { DiagnosticsDrawer } from './components/DiagnosticsDrawer';
 import { PresentationView } from './components/PresentationView';
 import { DiagramModal } from './components/DiagramModal';
+import { DiagramThemeModal } from './components/DiagramThemeModal';
 import { ThemeService } from '../services/theme.service';
 import { documentStore } from '../services/document.store';
 import { HtmlExporterService } from '../services/exporter.service';
@@ -16,6 +17,8 @@ export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState(documentStore.getActiveTab());
   const [showPresentation, setShowPresentation] = useState(false);
   const [showDiagnostics, setShowDiagnostics] = useState(false);
+  const [showDiagramThemes, setShowDiagramThemes] = useState(false);
+  const [diagramStyleVersion, setDiagramStyleVersion] = useState(0);
   const [activeHeadingId, setActiveHeadingId] = useState<string | undefined>();
   const [focusedDiagram, setFocusedDiagram] = useState<{ svgHtml: string; rawCode: string } | null>(null);
 
@@ -118,6 +121,7 @@ export const App: React.FC = () => {
         onTogglePresentation={() => setShowPresentation(true)}
         onToggleDiagnostics={() => setShowDiagnostics((prev) => !prev)}
         onExportHtml={handleExportHtml}
+        onOpenDiagramThemes={() => setShowDiagramThemes(true)}
         hasOpenTabs={activeTab !== null}
       />
 
@@ -137,10 +141,18 @@ export const App: React.FC = () => {
           document={activeTab?.parsed || null}
           diagrams={documentStore.getActiveDiagrams()}
           theme={theme}
+          diagramStyleVersion={diagramStyleVersion}
           onLoadSample={handleLoadSample}
           onFocusDiagram={(svgHtml, rawCode) => setFocusedDiagram({ svgHtml, rawCode })}
         />
       </div>
+
+      {/* Diagram Theming & Custom Palette Modal */}
+      <DiagramThemeModal
+        isOpen={showDiagramThemes}
+        onClose={() => setShowDiagramThemes(false)}
+        onThemeChanged={() => setDiagramStyleVersion((v) => v + 1)}
+      />
 
       {/* Fullscreen Interactive Diagram Studio Modal */}
       {focusedDiagram && (

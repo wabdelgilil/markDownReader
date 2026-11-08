@@ -9,6 +9,7 @@ interface DocumentViewerProps {
   document: ParsedDocument | null;
   diagrams: Map<string, string>;
   theme?: ReadingTheme;
+  diagramStyleVersion?: number;
   onLoadSample: () => void;
   onFocusDiagram?: (svgHtml: string, rawCode: string) => void;
 }
@@ -17,17 +18,18 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   document,
   diagrams,
   theme,
+  diagramStyleVersion,
   onLoadSample,
   onFocusDiagram,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Trigger Mermaid SVG rendering whenever the document, diagrams, or theme change
+  // Trigger Mermaid SVG rendering whenever the document, diagrams, theme, or diagram style change
   useEffect(() => {
     if (containerRef.current && diagrams.size > 0) {
       DiagramEngine.renderDiagrams(containerRef.current, diagrams);
     }
-  }, [document?.html, diagrams, theme]);
+  }, [document?.html, diagrams, theme, diagramStyleVersion]);
 
   // Handle Diagram Zoom, SVG Export, and Notion Code Copy Buttons via event delegation
   const handleContainerClick = (e: React.MouseEvent<HTMLDivElement>) => {

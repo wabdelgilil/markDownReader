@@ -1,15 +1,16 @@
+import { DiagramThemeService, DiagramStylePreset, CustomDiagramColors } from '../../services/diagram-theme.service';
+
 /**
  * High-Fidelity SVG Diagram Styler
- * Transforms raw Mermaid SVGs into enterprise-grade visuals:
- * - Flowcharts: Microsoft Visio & Lucidchart corporate styling
- * - Sequence Diagrams: High-contrast lifelines, messages, and actor cards
- * - Mindmaps: Obsidian & Miro organic chromatic hierarchy
- * - Gantt / Roadmaps: Microsoft Project executive timeline fidelity
- * - Git Graphs: GitHub / GitKraken tree with anti-collision commit labels
+ * Transforms raw Mermaid SVGs into enterprise-grade visuals with multi-style preset support:
+ * 1. Corporate (Default - Microsoft Visio & Lucidchart)
+ * 2. Minimalist (Notion & Linear Unified)
+ * 3. Modern (Obsidian & Raycast Glow)
+ * 4. Custom (Fully User-Configured Palette)
  */
 export class DiagramStyler {
   /**
-   * Primary entry point: enhances an SVG element in-place with software-grade aesthetics.
+   * Primary entry point: enhances an SVG element in-place with chosen preset aesthetics.
    */
   public static enhanceSvg(svg: SVGSVGElement): void {
     const currentTheme = (typeof document !== 'undefined'
@@ -18,9 +19,11 @@ export class DiagramStyler {
 
     const isLight = currentTheme === 'light';
     const isSepia = currentTheme === 'sepia';
+    const stylePreset = DiagramThemeService.getStylePreset();
+    const customColors = DiagramThemeService.getCustomColors();
 
-    // 1. Inject SVG Defs (Gradients & Drop Shadows adapted to theme)
-    this.injectDefs(svg, isLight, isSepia);
+    // 1. Inject SVG Defs (Gradients & Drop Shadows adapted to preset and theme)
+    this.injectDefs(svg, isLight, isSepia, stylePreset, customColors);
 
     // 2. Enforce strict LTR layout on the SVG
     svg.style.direction = 'ltr';
@@ -28,22 +31,28 @@ export class DiagramStyler {
 
     // 3. Detect diagram type and apply specialized styling
     if (svg.classList.contains('gitGraph') || svg.querySelector('.commit')) {
-      this.enhanceGitGraph(svg, isLight, isSepia);
+      this.enhanceGitGraph(svg, isLight, isSepia, stylePreset, customColors);
     } else if (svg.querySelector('.mindmap-node') || svg.classList.contains('mindmap')) {
-      this.enhanceMindmap(svg, isLight, isSepia);
+      this.enhanceMindmap(svg, isLight, isSepia, stylePreset);
     } else if (svg.querySelector('.task') || svg.classList.contains('gantt')) {
-      this.enhanceGantt(svg, isLight, isSepia);
+      this.enhanceGantt(svg, isLight, isSepia, stylePreset);
     } else if (svg.querySelector('.messageText') || svg.querySelector('.actor') || svg.classList.contains('sequenceDiagram')) {
-      this.enhanceSequence(svg, isLight, isSepia);
+      this.enhanceSequence(svg, isLight, isSepia, stylePreset, customColors);
     } else {
-      this.enhanceFlowchart(svg, isLight, isSepia);
+      this.enhanceFlowchart(svg, isLight, isSepia, stylePreset, customColors);
     }
   }
 
   /**
-   * Injects reusable SVG filters, gradients, and markers adapted to the active theme.
+   * Injects reusable SVG filters, gradients, and markers adapted to the preset and active theme.
    */
-  private static injectDefs(svg: SVGSVGElement, isLight: boolean, isSepia: boolean): void {
+  private static injectDefs(
+    svg: SVGSVGElement,
+    isLight: boolean,
+    isSepia: boolean,
+    _preset: DiagramStylePreset,
+    customColors: CustomDiagramColors
+  ): void {
     let defs = svg.querySelector('defs');
     if (!defs) {
       defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
@@ -52,9 +61,6 @@ export class DiagramStyler {
 
     const shadowOpacity = isLight || isSepia ? '0.08' : '0.4';
     const shadowColor = '#000000';
-
-    const procGradStart = isLight ? '#ffffff' : isSepia ? '#f0ead9' : '#18181b';
-    const procGradEnd = isLight ? '#f4f4f5' : isSepia ? '#e9e1cd' : '#111113';
 
     const defsContent = `
       <!-- Ambient Drop Shadow Filter -->
@@ -67,10 +73,10 @@ export class DiagramStyler {
         <feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="#818cf8" flood-opacity="0.5"/>
       </filter>
 
-      <!-- Visio Process Gradient -->
-      <linearGradient id="visio-process-grad" x1="0%" y1="0%" x2="0%" y2="100%">
-        <stop offset="0%" stop-color="${procGradStart}"/>
-        <stop offset="100%" stop-color="${procGradEnd}"/>
+      <!-- Visio Corporate Process Gradient (Royal Slate Blue) -->
+      <linearGradient id="visio-proc-corp" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stop-color="#1e3a8a"/>
+        <stop offset="100%" stop-color="#0f172a"/>
       </linearGradient>
 
       <!-- Visio Start/End Stadium Gradient (Emerald) -->
@@ -81,8 +87,20 @@ export class DiagramStyler {
 
       <!-- Visio Decision Gradient (Amber Gold) -->
       <linearGradient id="visio-decision-grad" x1="0%" y1="0%" x2="0%" y2="100%">
-        <stop offset="0%" stop-color="#d97706"/>
-        <stop offset="100%" stop-color="#b45309"/>
+        <stop offset="0%" stop-color="#b45309"/>
+        <stop offset="100%" stop-color="#78350f"/>
+      </linearGradient>
+
+      <!-- Modern Preset Violet Process Gradient -->
+      <linearGradient id="modern-proc-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stop-color="#2e1065"/>
+        <stop offset="100%" stop-color="#1e1838"/>
+      </linearGradient>
+
+      <!-- Modern Preset Cyan Decision Gradient -->
+      <linearGradient id="modern-dec-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stop-color="#082f49"/>
+        <stop offset="100%" stop-color="#0c1d2e"/>
       </linearGradient>
 
       <!-- Obsidian Mindmap Root Gradient -->
@@ -90,16 +108,28 @@ export class DiagramStyler {
         <stop offset="0%" stop-color="#6366f1"/>
         <stop offset="100%" stop-color="#4f46e5"/>
       </linearGradient>
+
+      <!-- Custom Arrow Marker -->
+      <marker id="custom-arrow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+        <path d="M 0 0 L 6 3 L 0 6 z" fill="${customColors.arrowColor}"/>
+      </marker>
     `;
 
     defs.innerHTML += defsContent;
   }
 
   /**
-   * Flowcharts -> Microsoft Visio & Lucidchart Enterprise Styling
+   * Flowcharts -> Parameterized by Diagram Style Preset
    */
-  private static enhanceFlowchart(svg: SVGSVGElement, isLight: boolean, isSepia: boolean): void {
+  private static enhanceFlowchart(
+    svg: SVGSVGElement,
+    isLight: boolean,
+    isSepia: boolean,
+    preset: DiagramStylePreset,
+    custom: CustomDiagramColors
+  ): void {
     const nodes = svg.querySelectorAll('.node');
+
     nodes.forEach((node) => {
       const rect = node.querySelector('rect');
       const polygon = node.querySelector('polygon');
@@ -113,33 +143,98 @@ export class DiagramStyler {
 
       if (rect) {
         const isStadium = rect.getAttribute('rx') && parseInt(rect.getAttribute('rx') || '0', 10) > 10;
+
         if (isStadium) {
-          // Visio Start / End Capsule
-          rect.style.fill = 'url(#visio-start-grad)';
-          rect.style.stroke = '#10b981';
-          rect.style.strokeWidth = '2px';
-          rect.setAttribute('filter', 'url(#visio-shadow)');
-          if (text) (text as SVGElement).style.fill = '#ffffff';
+          // ================= Start / End Capsule =================
+          if (preset === 'minimalist') {
+            rect.style.fill = isLight ? '#f4f4f5' : '#18181b';
+            rect.style.stroke = isLight ? '#d4d4d8' : '#3f3f46';
+            rect.style.strokeWidth = '1.5px';
+            rect.removeAttribute('filter');
+            if (text) (text as SVGElement).style.fill = isLight ? '#18181b' : '#f4f4f5';
+          } else if (preset === 'modern') {
+            rect.style.fill = '#4f46e5';
+            rect.style.stroke = '#818cf8';
+            rect.style.strokeWidth = '2px';
+            rect.setAttribute('filter', 'url(#obsidian-glow)');
+            if (text) (text as SVGElement).style.fill = '#ffffff';
+          } else if (preset === 'custom') {
+            rect.style.fill = custom.startEndFill;
+            rect.style.stroke = custom.startEndStroke;
+            rect.style.strokeWidth = '2px';
+            rect.setAttribute('filter', 'url(#visio-shadow)');
+            if (text) (text as SVGElement).style.fill = custom.textColor;
+          } else {
+            // Corporate (Visio)
+            rect.style.fill = 'url(#visio-start-grad)';
+            rect.style.stroke = '#10b981';
+            rect.style.strokeWidth = '1.75px';
+            rect.setAttribute('filter', 'url(#visio-shadow)');
+            if (text) (text as SVGElement).style.fill = '#ffffff';
+          }
         } else {
-          // Visio Corporate Process Box
+          // ================= Corporate / Standard Process Box =================
           rect.setAttribute('rx', '10');
           rect.setAttribute('ry', '10');
-          rect.style.fill = 'url(#visio-process-grad)';
-          rect.style.stroke = isLight ? '#4f46e5' : isSepia ? '#9a4316' : '#6366f1';
-          rect.style.strokeWidth = '1.75px';
-          rect.setAttribute('filter', 'url(#visio-shadow)');
-          if (text) (text as SVGElement).style.fill = isLight ? '#18181b' : isSepia ? '#2c2217' : '#f4f4f5';
+
+          if (preset === 'minimalist') {
+            rect.style.fill = isLight ? '#ffffff' : '#18181b';
+            rect.style.stroke = isLight ? '#e4e4e7' : '#27272a';
+            rect.style.strokeWidth = '1.5px';
+            rect.removeAttribute('filter');
+            if (text) (text as SVGElement).style.fill = isLight ? '#18181b' : '#f4f4f5';
+          } else if (preset === 'modern') {
+            rect.style.fill = 'url(#modern-proc-grad)';
+            rect.style.stroke = '#a78bfa';
+            rect.style.strokeWidth = '1.75px';
+            rect.setAttribute('filter', 'url(#visio-shadow)');
+            if (text) (text as SVGElement).style.fill = '#f5f3ff';
+          } else if (preset === 'custom') {
+            rect.style.fill = custom.processFill;
+            rect.style.stroke = custom.processStroke;
+            rect.style.strokeWidth = '1.75px';
+            rect.setAttribute('filter', 'url(#visio-shadow)');
+            if (text) (text as SVGElement).style.fill = custom.textColor;
+          } else {
+            // Corporate (Visio)
+            rect.style.fill = isLight ? '#ffffff' : isSepia ? '#f0ead9' : 'url(#visio-proc-corp)';
+            rect.style.stroke = isLight ? '#4f46e5' : isSepia ? '#9a4316' : '#3b82f6';
+            rect.style.strokeWidth = '1.75px';
+            rect.setAttribute('filter', 'url(#visio-shadow)');
+            if (text) (text as SVGElement).style.fill = isLight ? '#18181b' : isSepia ? '#2c2217' : '#ffffff';
+          }
         }
       } else if (polygon) {
-        // Visio Decision Diamond
-        polygon.style.fill = 'url(#visio-decision-grad)';
-        polygon.style.stroke = '#fbbf24';
-        polygon.style.strokeWidth = '2px';
-        polygon.setAttribute('filter', 'url(#visio-shadow)');
-        if (text) (text as SVGElement).style.fill = '#ffffff';
+        // ================= Decision Diamond =================
+        if (preset === 'minimalist') {
+          polygon.style.fill = isLight ? '#f4f4f5' : '#18181b';
+          polygon.style.stroke = isLight ? '#d4d4d8' : '#3f3f46';
+          polygon.style.strokeWidth = '1.5px';
+          polygon.removeAttribute('filter');
+          if (text) (text as SVGElement).style.fill = isLight ? '#18181b' : '#f4f4f5';
+        } else if (preset === 'modern') {
+          polygon.style.fill = 'url(#modern-dec-grad)';
+          polygon.style.stroke = '#22d3ee';
+          polygon.style.strokeWidth = '2px';
+          polygon.setAttribute('filter', 'url(#visio-shadow)');
+          if (text) (text as SVGElement).style.fill = '#e0f2fe';
+        } else if (preset === 'custom') {
+          polygon.style.fill = custom.decisionFill;
+          polygon.style.stroke = custom.decisionStroke;
+          polygon.style.strokeWidth = '2px';
+          polygon.setAttribute('filter', 'url(#visio-shadow)');
+          if (text) (text as SVGElement).style.fill = custom.textColor;
+        } else {
+          // Corporate (Visio)
+          polygon.style.fill = 'url(#visio-decision-grad)';
+          polygon.style.stroke = '#f59e0b';
+          polygon.style.strokeWidth = '2px';
+          polygon.setAttribute('filter', 'url(#visio-shadow)');
+          if (text) (text as SVGElement).style.fill = '#ffffff';
+        }
       } else if (circle) {
-        circle.style.fill = 'url(#visio-start-grad)';
-        circle.style.stroke = '#10b981';
+        circle.style.fill = preset === 'custom' ? custom.startEndFill : 'url(#visio-start-grad)';
+        circle.style.stroke = preset === 'custom' ? custom.startEndStroke : '#10b981';
         circle.setAttribute('filter', 'url(#visio-shadow)');
         if (text) (text as SVGElement).style.fill = '#ffffff';
       }
@@ -148,18 +243,44 @@ export class DiagramStyler {
     // Style edge paths and arrows
     const paths = svg.querySelectorAll('.flowchart-link, path.link');
     paths.forEach((p) => {
-      (p as SVGElement).style.stroke = isLight ? '#64748b' : isSepia ? '#7d6b53' : '#94a3b8';
+      let arrowColor = '#64748b';
+      if (preset === 'custom') {
+        arrowColor = custom.arrowColor;
+      } else if (preset === 'minimalist') {
+        arrowColor = isLight ? '#71717a' : '#a1a1aa';
+      } else if (preset === 'modern') {
+        arrowColor = '#818cf8';
+      } else {
+        // Corporate
+        arrowColor = isLight ? '#4f46e5' : '#38bdf8';
+      }
+
+      (p as SVGElement).style.stroke = arrowColor;
       (p as SVGElement).style.strokeWidth = '1.8px';
     });
   }
 
   /**
-   * Sequence Diagrams -> High-Contrast Architecture Fidelity
+   * Sequence Diagrams -> Parameterized by Style Preset
    */
-  private static enhanceSequence(svg: SVGSVGElement, isLight: boolean, isSepia: boolean): void {
+  private static enhanceSequence(
+    svg: SVGSVGElement,
+    isLight: boolean,
+    isSepia: boolean,
+    preset: DiagramStylePreset,
+    custom: CustomDiagramColors
+  ): void {
     const textColor = isLight ? '#18181b' : isSepia ? '#2c2217' : '#f4f4f5';
-    const accentColor = isLight ? '#4f46e5' : isSepia ? '#9a4316' : '#6366f1';
-    const borderColor = isLight ? '#e4e4e7' : isSepia ? '#ded5c2' : '#27272a';
+    let accentColor = isLight ? '#4f46e5' : isSepia ? '#9a4316' : '#6366f1';
+    let borderColor = isLight ? '#e4e4e7' : isSepia ? '#ded5c2' : '#27272a';
+
+    if (preset === 'custom') {
+      accentColor = custom.processStroke;
+    } else if (preset === 'minimalist') {
+      accentColor = isLight ? '#71717a' : '#a1a1aa';
+    } else if (preset === 'modern') {
+      accentColor = '#818cf8';
+    }
 
     // 1. Message texts between lifelines
     const messageTexts = svg.querySelectorAll<SVGTextElement>('.messageText');
@@ -189,14 +310,15 @@ export class DiagramStyler {
     // 3. Message lines & Arrowheads
     const messageLines = svg.querySelectorAll<SVGLineElement>('.messageLine0, .messageLine1');
     messageLines.forEach((ml) => {
-      ml.style.stroke = accentColor;
+      ml.style.stroke = preset === 'custom' ? custom.arrowColor : accentColor;
       ml.style.strokeWidth = '1.75px';
     });
 
     const arrowheads = svg.querySelectorAll<SVGPathElement>('#arrowhead path, #crosshead path');
     arrowheads.forEach((ah) => {
-      ah.style.fill = accentColor;
-      ah.style.stroke = accentColor;
+      const col = preset === 'custom' ? custom.arrowColor : accentColor;
+      ah.style.fill = col;
+      ah.style.stroke = col;
     });
 
     // 4. Actor boxes & Lifelines
@@ -205,15 +327,29 @@ export class DiagramStyler {
       const rect = act.querySelector('rect');
       const text = act.querySelector('text');
       if (rect) {
-        rect.style.fill = accentColor;
-        rect.style.stroke = isLight ? '#1d4ed8' : isSepia ? '#78350f' : '#60a5fa';
-        rect.style.strokeWidth = '1.5px';
-        rect.setAttribute('rx', '8');
-        rect.setAttribute('ry', '8');
-        rect.setAttribute('filter', 'url(#visio-shadow)');
+        if (preset === 'minimalist') {
+          rect.style.fill = isLight ? '#ffffff' : '#18181b';
+          rect.style.stroke = isLight ? '#e4e4e7' : '#3f3f46';
+          rect.style.strokeWidth = '1.5px';
+          rect.removeAttribute('filter');
+          if (text) text.style.fill = textColor;
+        } else if (preset === 'custom') {
+          rect.style.fill = custom.processFill;
+          rect.style.stroke = custom.processStroke;
+          rect.style.strokeWidth = '1.5px';
+          rect.setAttribute('filter', 'url(#visio-shadow)');
+          if (text) text.style.fill = custom.textColor;
+        } else {
+          rect.style.fill = accentColor;
+          rect.style.stroke = isLight ? '#4338ca' : '#818cf8';
+          rect.style.strokeWidth = '1.5px';
+          rect.setAttribute('rx', '8');
+          rect.setAttribute('ry', '8');
+          rect.setAttribute('filter', 'url(#visio-shadow)');
+          if (text) text.style.fill = '#ffffff';
+        }
       }
       if (text) {
-        text.style.fill = '#ffffff';
         text.style.fontWeight = '600';
         text.style.fontSize = '13px';
       }
@@ -242,16 +378,26 @@ export class DiagramStyler {
   /**
    * Mindmap -> Obsidian & Miro Organic Palette
    */
-  private static enhanceMindmap(svg: SVGSVGElement, _isLight: boolean, _isSepia: boolean): void {
+  private static enhanceMindmap(
+    svg: SVGSVGElement,
+    isLight: boolean,
+    _isSepia: boolean,
+    preset: DiagramStylePreset
+  ): void {
     const mindmapNodes = svg.querySelectorAll('.mindmap-node');
-    const branchColors = [
-      { fill: '#4f46e5', stroke: '#818cf8' }, // Indigo
-      { fill: '#0d9488', stroke: '#2dd4bf' }, // Teal
-      { fill: '#d97706', stroke: '#fbbf24' }, // Amber
-      { fill: '#7c3aed', stroke: '#c084fc' }, // Violet
-      { fill: '#0284c7', stroke: '#38bdf8' }, // Sky
-      { fill: '#e11d48', stroke: '#fb7185' }, // Rose
-    ];
+    const branchColors = preset === 'minimalist'
+      ? [
+          { fill: isLight ? '#f4f4f5' : '#18181b', stroke: isLight ? '#d4d4d8' : '#3f3f46' },
+          { fill: isLight ? '#f4f4f5' : '#18181b', stroke: isLight ? '#d4d4d8' : '#3f3f46' },
+        ]
+      : [
+          { fill: '#4f46e5', stroke: '#818cf8' }, // Indigo
+          { fill: '#0d9488', stroke: '#2dd4bf' }, // Teal
+          { fill: '#d97706', stroke: '#fbbf24' }, // Amber
+          { fill: '#7c3aed', stroke: '#c084fc' }, // Violet
+          { fill: '#0284c7', stroke: '#38bdf8' }, // Sky
+          { fill: '#e11d48', stroke: '#fb7185' }, // Rose
+        ];
 
     let colorIndex = 0;
 
@@ -261,19 +407,23 @@ export class DiagramStyler {
       const text = node.querySelector('text');
 
       if (text) {
-        (text as SVGElement).style.fill = '#ffffff';
+        (text as SVGElement).style.fill = preset === 'minimalist'
+          ? (isLight ? '#18181b' : '#f4f4f5')
+          : '#ffffff';
         (text as SVGElement).style.fontWeight = '600';
         (text as SVGElement).style.fontSize = '12px';
       }
 
       if (circle) {
-        // Central Root Node: Obsidian glowing orb
-        circle.style.fill = 'url(#obsidian-root-grad)';
-        circle.style.stroke = '#818cf8';
+        circle.style.fill = preset === 'minimalist'
+          ? (isLight ? '#ffffff' : '#18181b')
+          : 'url(#obsidian-root-grad)';
+        circle.style.stroke = preset === 'minimalist' ? (isLight ? '#e4e4e7' : '#3f3f46') : '#818cf8';
         circle.style.strokeWidth = '3px';
-        circle.setAttribute('filter', 'url(#obsidian-glow)');
+        if (preset !== 'minimalist') {
+          circle.setAttribute('filter', 'url(#obsidian-glow)');
+        }
       } else if (rect) {
-        // Radiating Node Cards: Obsidian modern rounded capsules
         const palette = branchColors[colorIndex % branchColors.length];
         colorIndex++;
 
@@ -282,14 +432,17 @@ export class DiagramStyler {
         rect.style.fill = palette.fill;
         rect.style.stroke = palette.stroke;
         rect.style.strokeWidth = '2px';
-        rect.setAttribute('filter', 'url(#visio-shadow)');
+        if (preset !== 'minimalist') {
+          rect.setAttribute('filter', 'url(#visio-shadow)');
+        }
       }
     });
 
-    // Connecting branches
     const lines = svg.querySelectorAll('path.mindmap-edge');
     lines.forEach((line) => {
-      (line as SVGElement).style.stroke = '#818cf8';
+      (line as SVGElement).style.stroke = preset === 'minimalist'
+        ? (isLight ? '#71717a' : '#a1a1aa')
+        : '#818cf8';
       (line as SVGElement).style.strokeWidth = '2.5px';
       (line as SVGElement).style.opacity = '0.85';
     });
@@ -298,12 +451,16 @@ export class DiagramStyler {
   /**
    * Gantt -> Microsoft Project Executive Timeline
    */
-  private static enhanceGantt(svg: SVGSVGElement, isLight: boolean, isSepia: boolean): void {
+  private static enhanceGantt(
+    svg: SVGSVGElement,
+    isLight: boolean,
+    isSepia: boolean,
+    preset: DiagramStylePreset
+  ): void {
     const textColor = isLight ? '#18181b' : isSepia ? '#2c2217' : '#f4f4f5';
     const mutedColor = isLight ? '#71717a' : isSepia ? '#786b59' : '#a1a1aa';
     const gridColor = isLight ? '#e4e4e7' : isSepia ? '#ded5c2' : '#27272a';
 
-    // Project Title
     const title = svg.querySelector('.titleText');
     if (title) {
       (title as SVGElement).style.fill = textColor;
@@ -311,7 +468,6 @@ export class DiagramStyler {
       (title as SVGElement).style.fontSize = '16px';
     }
 
-    // Task text labels
     const taskTexts = svg.querySelectorAll('.taskText, .taskTextOutsideRight');
     taskTexts.forEach((t) => {
       (t as SVGElement).style.fill = '#ffffff';
@@ -320,15 +476,15 @@ export class DiagramStyler {
       (t as SVGElement).style.textShadow = '0 1px 3px rgba(0,0,0,0.85)';
     });
 
-    // Task bars: MS Project Capsules
     const tasks = svg.querySelectorAll('rect.task');
     tasks.forEach((t) => {
       t.setAttribute('rx', '6');
       t.setAttribute('ry', '6');
-      t.setAttribute('filter', 'url(#visio-shadow)');
+      if (preset !== 'minimalist') {
+        t.setAttribute('filter', 'url(#visio-shadow)');
+      }
     });
 
-    // Axis date text
     const dateTicks = svg.querySelectorAll('.tick text');
     dateTicks.forEach((dt) => {
       (dt as SVGElement).style.fill = mutedColor;
@@ -336,14 +492,12 @@ export class DiagramStyler {
       (dt as SVGElement).style.fontSize = '11px';
     });
 
-    // Grid lines
     const gridLines = svg.querySelectorAll('.grid .tick line');
     gridLines.forEach((gl) => {
       (gl as SVGElement).style.stroke = gridColor;
       (gl as SVGElement).style.strokeDasharray = '4 4';
     });
 
-    // Today Marker
     const todayLine = svg.querySelector('.today');
     if (todayLine) {
       (todayLine as SVGElement).style.stroke = '#ef4444';
@@ -355,17 +509,21 @@ export class DiagramStyler {
   /**
    * Git Graph -> Clean GitHub Tree with Mathematical Anti-Collision Staggering
    */
-  private static enhanceGitGraph(svg: SVGSVGElement, isLight: boolean, isSepia: boolean): void {
+  private static enhanceGitGraph(
+    svg: SVGSVGElement,
+    isLight: boolean,
+    isSepia: boolean,
+    _preset: DiagramStylePreset,
+    _custom: CustomDiagramColors
+  ): void {
     const textColor = isLight ? '#18181b' : isSepia ? '#2c2217' : '#f4f4f5';
 
-    // 1. Remove opaque grey boxes behind commit labels
     const commitLabelBkgs = svg.querySelectorAll('.commit-label-bkg');
     commitLabelBkgs.forEach((bkg) => {
       (bkg as SVGElement).style.display = 'none';
       (bkg as SVGElement).style.opacity = '0';
     });
 
-    // 2. Commit labels: Anti-collision staggering & theme color
     const commitLabels = svg.querySelectorAll<SVGTextElement>('.commit-label text');
     commitLabels.forEach((label, idx) => {
       label.style.fill = textColor;
@@ -379,13 +537,12 @@ export class DiagramStyler {
         label.style.textShadow = 'none';
       }
 
-      // Stagger vertical offsets for consecutive commits to eliminate horizontal text collision
+      // Anti-collision staggering: alternate vertical offsets
       const currentDy = parseFloat(label.getAttribute('dy') || '0');
       const offset = (idx % 2 === 1) ? 14 : -6;
       label.setAttribute('dy', `${currentDy + offset}px`);
     });
 
-    // 3. Branch labels: rounded pills
     const branchLabels = svg.querySelectorAll('.branch-label');
     branchLabels.forEach((bl) => {
       const rect = bl.querySelector('rect');
