@@ -1,9 +1,9 @@
 import mermaid from 'mermaid';
-import { DiagramStyler } from './styler';
+import { DiagramDispatcher } from './dispatcher';
 
 /**
- * Interactive Diagram Engine powered by Mermaid.js
- * Configured with high-contrast Obsidian & Modern palettes for Mindmaps, GitGraphs, and Gantt charts.
+ * Universal Diagram Engine with Intelligent Multi-Engine Dispatcher
+ * Automatically detects whether to use Markmap (Obsidian), Chart.js, or Mermaid with Visio enhancements.
  */
 export class DiagramEngine {
   private static initialized = false;
@@ -27,12 +27,12 @@ export class DiagramEngine {
         secondaryColor: '#8b5cf6',
         tertiaryColor: '#10b981',
 
-        // Git Graph styling (Obsidian / GitHub palette)
-        git0: '#38bdf8', // main branch: Bright Sky
-        git1: '#a855f7', // develop branch: Purple
-        git2: '#10b981', // feature branch: Emerald
-        git3: '#f59e0b', // release branch: Amber
-        git4: '#f43f5e', // hotfix branch: Rose
+        // Git Graph styling
+        git0: '#38bdf8',
+        git1: '#a855f7',
+        git2: '#10b981',
+        git3: '#f59e0b',
+        git4: '#f43f5e',
         gitBranchLabel0: '#0284c7',
         gitBranchLabel1: '#7c3aed',
         gitBranchLabel2: '#059669',
@@ -44,16 +44,7 @@ export class DiagramEngine {
         commitLabelColor: '#f1f5f9',
         commitLabelBackground: 'transparent',
 
-        // Mindmap (Obsidian organic palette)
-        mindmapNode0: '#6366f1', // Central root
-        mindmapNode1: '#10b981', // Emerald branch
-        mindmapNode2: '#8b5cf6', // Purple branch
-        mindmapNode3: '#f59e0b', // Amber branch
-        mindmapNode4: '#06b6d4', // Cyan branch
-        mindmapNode5: '#ec4899', // Pink branch
-        mindmapTextColor: '#ffffff',
-
-        // Gantt Chart (Crisp, High-Contrast Executive styling)
+        // Gantt Chart styling
         sectionBkgColor: '#1e293b40',
         altSectionBkgColor: '#0f172a40',
         taskBkgColor: '#2563eb',
@@ -87,7 +78,7 @@ export class DiagramEngine {
   }
 
   /**
-   * Pre-processes Markdown content to extract ```mermaid blocks into interactive placeholders.
+   * Pre-processes Markdown content to extract diagram blocks into interactive placeholders.
    */
   public static extractPlaceholders(content: string): {
     content: string;
@@ -96,15 +87,19 @@ export class DiagramEngine {
     const diagrams = new Map<string, string>();
     let index = 0;
 
-    const transformed = content.replace(/```mermaid([\s\S]*?)```/g, (_match, code) => {
-      const id = `mermaid-canvas-${index++}`;
+    const transformed = content.replace(/```(mermaid|markmap|chart)([\s\S]*?)```/g, (_match, _lang, code) => {
+      const id = `diagram-canvas-${index++}`;
       const cleanCode = code.trim();
       diagrams.set(id, cleanCode);
+
+      // Intelligent classification
+      const classification = DiagramDispatcher.classify(cleanCode);
+
       return `<div class="mermaid-diagram-container my-6 p-4 rounded-2xl bg-theme-surface border border-theme-border shadow-md overflow-hidden select-none" data-diagram-id="${id}" data-diagram-code="${encodeURIComponent(cleanCode)}">
         <div class="flex items-center justify-between pb-3 mb-3 border-b border-theme-border/60 text-xs text-theme-muted" dir="ltr">
           <div class="flex items-center gap-2">
-            <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-xs shadow-emerald-500/50"></span>
-            <span class="font-semibold text-theme-text font-mono">Mermaid Studio</span>
+            <span class="inline-block w-2.5 h-2.5 rounded-full" style="background-color: ${classification.accentColor}; box-shadow: 0 0 8px ${classification.accentColor}80;"></span>
+            <span class="font-semibold text-theme-text font-mono">${classification.badge}</span>
           </div>
           <div class="flex items-center gap-1.5">
             <button class="diagram-action-btn px-2.5 py-1 rounded-lg hover:bg-theme-bg border border-theme-border/60 text-purple-400 hover:text-purple-300 font-semibold transition-colors text-xs cursor-pointer flex items-center gap-1" data-action="focus-modal" title="فتح في استوديو تفاعلي منفصل بملء الشاشة">
@@ -118,7 +113,7 @@ export class DiagramEngine {
           </div>
         </div>
         <div id="${id}" class="mermaid-target flex justify-center items-center min-h-[140px] overflow-auto" dir="ltr" style="direction: ltr !important;">
-          <div class="animate-pulse text-xs text-theme-muted py-6">جاري رسم المخطط التفاعلي...</div>
+          <div class="animate-pulse text-xs text-theme-muted py-6">جاري تشغيل المحرك المتخصص للمخطط...</div>
         </div>
       </div>`;
     });
@@ -127,7 +122,7 @@ export class DiagramEngine {
   }
 
   /**
-   * Client-side rendering of all diagram placeholders inside a container element.
+   * Client-side rendering of all diagram placeholders using their specialized native engines.
    */
   public static async renderDiagrams(
     container: HTMLElement,
@@ -136,30 +131,9 @@ export class DiagramEngine {
     this.initialize();
 
     for (const [id, code] of diagrams.entries()) {
-      const target = container.querySelector(`#${id}`);
+      const target = container.querySelector(`#${id}`) as HTMLElement;
       if (!target) continue;
-
-      try {
-        const renderId = `render-${id}-${Date.now()}`;
-        const { svg } = await mermaid.render(renderId, code);
-        target.innerHTML = svg;
-
-        const svgElement = target.querySelector('svg');
-        if (svgElement) {
-          svgElement.style.maxWidth = '100%';
-          svgElement.style.height = 'auto';
-          svgElement.setAttribute('font-family', 'Readex Pro, system-ui, sans-serif');
-
-          // Apply software-grade styling (Visio, Obsidian, MS Project)
-          DiagramStyler.enhanceSvg(svgElement);
-        }
-      } catch (err: unknown) {
-        const errorMsg = err instanceof Error ? err.message : 'Error rendering diagram';
-        target.innerHTML = `<div class="p-3 text-xs text-rose-400 bg-rose-500/10 rounded-xl border border-rose-500/30 font-mono" dir="ltr">
-          <div class="font-bold mb-1">Diagram Render Error:</div>
-          <div>${errorMsg}</div>
-        </div>`;
-      }
+      await DiagramDispatcher.render(target, id, code);
     }
   }
 }

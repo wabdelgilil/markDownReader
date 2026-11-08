@@ -130,7 +130,10 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   }
 
   return (
-    <main className="flex-1 overflow-y-auto px-6 py-8 flex justify-center">
+    <main
+      id="document-scroll-container"
+      className="flex-1 h-full overflow-y-auto px-6 py-8 flex justify-center"
+    >
       <article
         ref={containerRef}
         onClick={handleContainerClick}

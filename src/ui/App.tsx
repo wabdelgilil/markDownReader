@@ -53,6 +53,35 @@ export const App: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [activeTab]);
 
+  // Smart Scrollspy: Automatically tracks active heading as user scrolls
+  useEffect(() => {
+    if (!activeTab?.parsed) return;
+
+    const scrollContainer = document.getElementById('document-scroll-container');
+    if (!scrollContainer) return;
+
+    const headingElements = scrollContainer.querySelectorAll('h1, h2, h3, h4');
+    if (headingElements.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setActiveHeadingId(entry.target.id);
+          }
+        });
+      },
+      {
+        root: scrollContainer,
+        rootMargin: '-10% 0px -75% 0px',
+        threshold: 0,
+      }
+    );
+
+    headingElements.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, [activeTab?.id, activeTab?.parsed]);
+
   const handleThemeChange = (newTheme: ReadingTheme) => {
     setTheme(newTheme);
     ThemeService.setTheme(newTheme);
@@ -81,7 +110,7 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className={`min-h-screen flex flex-col bg-theme-bg text-theme-text ${theme === 'terminal' ? 'terminal-scanline' : ''}`}>
+    <div className={`h-screen max-h-screen overflow-hidden flex flex-col bg-theme-bg text-theme-text ${theme === 'terminal' ? 'terminal-scanline' : ''}`}>
       {/* Top Navbar with Multi-Tab Strip */}
       <Navbar
         currentTheme={theme}
