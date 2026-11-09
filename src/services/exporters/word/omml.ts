@@ -69,13 +69,16 @@ export class OmmlConverter {
     let result = latex.replace(/\\ce\{([\s\S]*?)\}/g, (_m, chem) => {
       // Replace -> with \rightarrow
       let formula = chem.replace(/->/g, ' \\rightarrow ');
+      // Fix stray ^ + or ^ - in chemical reactions (e.g. ^+ or ^-)
+      formula = formula.replace(/\^\s*([+-])/g, '^{$1}');
       // Auto-subscript numbers following chemical elements (e.g. CO2 -> CO_2, H2O -> H_2O)
       formula = formula.replace(/([A-Za-z\)])(\d+)/g, '$1_{$2}');
       return formula;
     });
 
-    // 2. Normalize simple -> to \rightarrow
+    // 2. Normalize simple -> to \rightarrow and clean stray exponents
     result = result.replace(/->/g, ' \\rightarrow ');
+    result = result.replace(/\^\s*([+-])/g, '^{$1}');
 
     return result;
   }
@@ -301,8 +304,16 @@ export class OmmlConverter {
 
         // Robust base extraction: extracts the last complete OMML element (delimiter, fraction, radical, run, etc.)
         const extracted = this.extractLastOmmlElement(output);
+        const rawBase = extracted.element;
+
+        if (!rawBase || rawBase.trim() === '' || rawBase === '<m:r><m:t></m:t></m:r>') {
+          // If no valid preceding base exists, avoid emitting invalid empty base OMML
+          output += `<m:r><m:rPr><m:nor/></m:rPr><m:t>${char}</m:t></m:r>${this.parseExpression(firstArg.content)}`;
+          continue;
+        }
+
         output = extracted.remaining;
-        const baseElement = extracted.element || `<m:r><m:t></m:t></m:r>`;
+        const baseElement = rawBase;
 
         if (secondArg) {
           const subContent = isSup ? secondArg.content : firstArg.content;

@@ -2,9 +2,31 @@
   "name": "mdfull",
   "version": "1.0.0",
   "description": "MDFull - Universal High-Performance Markdown Document Station with first-class RTL, Math, Diagrams, and Themes",
-  "author": "Engineering Core Team",
+  "author": "MDFull Core Contributors",
   "license": "MIT",
-  "private": true,
+  "homepage": "https://github.com/mdfull/mdfull#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mdfull/mdfull.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mdfull/mdfull/issues"
+  },
+  "keywords": [
+    "markdown",
+    "markdown-viewer",
+    "markdown-station",
+    "arabic-rtl",
+    "bidi",
+    "katex",
+    "latex",
+    "mermaid",
+    "word-export",
+    "omml",
+    "pdf-export",
+    "highlighter",
+    "presentation-deck"
+  ],
   "type": "module",
   "scripts": {
     "dev": "vite",
