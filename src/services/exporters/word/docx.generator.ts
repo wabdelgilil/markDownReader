@@ -6,6 +6,9 @@ import { WordDiagramShapeEngine } from './diagram.shapes';
 import { OpenXmlTemplates } from './openxml.templates';
 import { TableBuilder } from './table.builder';
 
+const TEXT_NODE = 3;
+const ELEMENT_NODE = 1;
+
 /**
  * Enterprise OpenXML DOCX Document Generator
  * Constructs fully compliant Microsoft Word documents with:
@@ -23,9 +26,13 @@ export class DocxGenerator {
     zip.file('[Content_Types].xml', OpenXmlTemplates.getContentTypesXml());
     zip.file('_rels/.rels', OpenXmlTemplates.getRootRelsXml());
     zip.file('word/_rels/document.xml.rels', OpenXmlTemplates.getDocumentRelsXml());
-    zip.file('word/styles.xml', OpenXmlTemplates.getStylesXml(isRtl));
+    zip.file('word/styles.xml', OpenXmlTemplates.getStylesXml());
     zip.file('word/fontTable.xml', OpenXmlTemplates.getFontTableXml());
     zip.file('word/settings.xml', OpenXmlTemplates.getSettingsXml());
+    zip.file('word/webSettings.xml', OpenXmlTemplates.getWebSettingsXml());
+    zip.file('word/theme/theme1.xml', OpenXmlTemplates.getThemeXml());
+    zip.file('docProps/core.xml', OpenXmlTemplates.getDocPropsCoreXml(doc.metadata.title || 'Document', doc.metadata.author || 'MDFull'));
+    zip.file('docProps/app.xml', OpenXmlTemplates.getDocPropsAppXml());
 
     // 2. Main Document Body
     const documentXml = this.buildDocumentXml(doc, options, isRtl);
@@ -40,8 +47,16 @@ export class DocxGenerator {
   }
 
   private static buildDocumentXml(doc: ParsedDocument, options: ExportOptions, isRtl: boolean): string {
-    const parser = new DOMParser();
-    const docDom = parser.parseFromString(doc.html, 'text/html');
+    let docDom: Document;
+    if (typeof DOMParser !== 'undefined') {
+      const parser = new DOMParser();
+      docDom = parser.parseFromString(doc.html, 'text/html');
+    } else {
+      // Node.js test environment compatibility
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { JSDOM } = require('jsdom');
+      docDom = new JSDOM(doc.html).window.document;
+    }
     const bodyNodes = Array.from(docDom.body.childNodes);
 
     let bodyXml = '';
@@ -132,23 +147,23 @@ export class DocxGenerator {
   }
 
   private static convertNode(node: Node, options: ExportOptions, isRtl: boolean): string {
-    if (node.nodeType === Node.TEXT_NODE) {
+    if (node.nodeType === TEXT_NODE) {
       const text = node.textContent?.trim();
       if (!text) return '';
       return this.createParagraph(this.parseResidualMarkdown(text, isRtl), isRtl);
     }
 
-    if (node.nodeType !== Node.ELEMENT_NODE) return '';
+    if (node.nodeType !== ELEMENT_NODE) return '';
 
     const el = node as HTMLElement;
     const tagName = el.tagName.toLowerCase();
 
-    // 1. Headings (h1 - h6) - Cleanly strip any anchor # tags
+    // 1. Headings (h1 - h6) - Cleanly strip any anchor # tags and stray hash symbols
     if (/^h[1-6]$/.test(tagName)) {
       const level = tagName[1];
       const clone = el.cloneNode(true) as HTMLElement;
       clone.querySelectorAll('.heading-anchor, a[href^="#"]').forEach((a) => a.remove());
-      const headingText = (clone.textContent || '').replace(/^#+\s*/, '').replace(/\s*#+$/, '').trim();
+      const headingText = (clone.textContent || '').replace(/#/g, '').trim();
 
       if (!headingText) return '';
 
@@ -204,16 +219,19 @@ export class DocxGenerator {
     // 4. Notion Code Card (<div class="notion-code-card">)
     if (el.classList.contains('notion-code-card')) {
       const codeEl = el.querySelector('pre code') || el.querySelector('pre');
-      const langEl = el.querySelector('.code-card-header span:last-child');
-      const lang = langEl?.textContent?.trim() || '';
+      const langMatch = codeEl?.className.match(/language-(\w+)/);
+      const lang = langMatch?.[1] || el.querySelector('.code-card-header .font-mono:not(button *)')?.textContent?.trim() || '';
       const codeText = codeEl?.textContent || '';
       return this.renderCodeBlock(codeText, lang);
     }
 
     // Standalone <pre><code>
     if (tagName === 'pre') {
-      const codeText = el.textContent || '';
-      return this.renderCodeBlock(codeText, '');
+      const codeEl = el.querySelector('code') || el;
+      const langMatch = codeEl?.className.match(/language-(\w+)/);
+      const lang = langMatch?.[1] || '';
+      const codeText = codeEl.textContent || '';
+      return this.renderCodeBlock(codeText, lang);
     }
 
     // 5. GitHub / Markdown Callout Alerts (<div class="callout-block">)
@@ -343,11 +361,6 @@ export class DocxGenerator {
     const titleEl = calloutEl.querySelector('.callout-title, .font-semibold') || calloutEl.firstElementChild;
     const titleText = (titleEl?.textContent || 'ملاحظة').trim();
 
-    const bodyEl = calloutEl.querySelector('.callout-body, .text-sm:last-child') || calloutEl;
-    let rawBody = (bodyEl !== titleEl ? bodyEl.textContent : '') || '';
-    if (!rawBody) rawBody = calloutEl.textContent || '';
-    rawBody = rawBody.replace(titleText, '').trim();
-
     // Determine color theme based on callout title
     let borderColor = '3B82F6';
     let bgColor = 'EFF6FF';
@@ -371,7 +384,15 @@ export class DocxGenerator {
       titleColor = 'B91C1C';
     }
 
-    const bodyRuns = this.parseResidualMarkdown(rawBody, isRtl);
+    const bodyEl = calloutEl.querySelector('.callout-body, .text-sm:last-child') || calloutEl;
+    let bodyRuns = '';
+    if (bodyEl !== titleEl) {
+      bodyRuns = this.convertInlineRuns(bodyEl as HTMLElement, isRtl);
+    }
+    if (!bodyRuns) {
+      const rawBody = (bodyEl.textContent || '').replace(titleText, '').trim();
+      bodyRuns = this.parseResidualMarkdown(rawBody, isRtl);
+    }
 
     return `
       <w:tbl>
@@ -464,7 +485,7 @@ export class DocxGenerator {
     let runs = '';
 
     for (const child of Array.from(parent.childNodes)) {
-      if (child.nodeType === Node.TEXT_NODE) {
+      if (child.nodeType === TEXT_NODE) {
         const text = child.textContent;
         if (text) {
           runs += this.parseResidualMarkdown(text, isRtl);
@@ -472,7 +493,7 @@ export class DocxGenerator {
         continue;
       }
 
-      if (child.nodeType !== Node.ELEMENT_NODE) continue;
+      if (child.nodeType !== ELEMENT_NODE) continue;
 
       const el = child as HTMLElement;
       const tag = el.tagName.toLowerCase();

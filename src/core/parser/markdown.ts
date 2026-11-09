@@ -135,9 +135,19 @@ export class MarkdownPipeline {
     const withRestoredMath = MathTransformer.restorePlaceholders(parsedRawHtml, mathMap, diagnostics);
 
     // 7. Sanitize HTML preserving styling and math attributes
-    const domPurifyInstance = typeof (DOMPurify as any) === 'function' && typeof (DOMPurify as any).sanitize !== 'function'
-      ? (DOMPurify as any)(typeof window !== 'undefined' ? window : undefined)
-      : DOMPurify;
+    let domPurifyInstance = DOMPurify;
+    if (typeof (DOMPurify as any) === 'function' && typeof (DOMPurify as any).sanitize !== 'function') {
+      if (typeof window !== 'undefined') {
+        domPurifyInstance = (DOMPurify as any)(window);
+      } else {
+        try {
+          const { JSDOM } = require('jsdom');
+          domPurifyInstance = (DOMPurify as any)(new JSDOM('').window);
+        } catch {
+          domPurifyInstance = DOMPurify;
+        }
+      }
+    }
 
     const sanitizedHtml = domPurifyInstance.sanitize(withRestoredMath, {
       ADD_TAGS: [
@@ -204,10 +214,13 @@ export class MarkdownPipeline {
       CAUTION: { title: 'تنبيه خطر', color: 'text-rose-500', border: 'border-rose-500', bg: 'bg-rose-500/10', icon: '🚨' },
     };
 
+    const inlineParser = new Marked({ gfm: true, breaks: true });
+
     return content.replace(/>\s*\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]\s*\r?\n((?:>.*\r?\n?)*)/gi, (_match, type, body) => {
       const upperType = type.toUpperCase();
       const meta = calloutTypes[upperType] || calloutTypes.NOTE;
       const cleanBody = body.replace(/^>\s?/gm, '').trim();
+      const parsedBody = (inlineParser.parseInline(cleanBody) as string) || cleanBody;
       const dir = BiDiArbitrator.detectDirection(cleanBody);
 
       return `<div class="callout-block my-5 p-4 rounded-xl border-r-4 ${meta.border} ${meta.bg} shadow-sm" dir="${dir}">
@@ -215,7 +228,7 @@ export class MarkdownPipeline {
           <span>${meta.icon}</span>
           <span>${meta.title} (${upperType})</span>
         </div>
-        <div class="callout-body text-sm leading-relaxed text-theme-text/90">${cleanBody}</div>
+        <div class="callout-body text-sm leading-relaxed text-theme-text/90">${parsedBody}</div>
       </div>\n\n`;
     });
   }

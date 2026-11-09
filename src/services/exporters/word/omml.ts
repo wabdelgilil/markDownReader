@@ -67,8 +67,11 @@ export class OmmlConverter {
   private static preprocessSpecialEnvironments(latex: string): string {
     // 1. Chemistry: \ce{...}
     let result = latex.replace(/\\ce\{([\s\S]*?)\}/g, (_m, chem) => {
-      // Replace -> with \rightarrow
-      let formula = chem.replace(/->/g, ' \\rightarrow ');
+      // Handle labeled reaction arrow ->[above][below] and ->[above]
+      let formula = chem.replace(/->\s*\[(.*?)\]\s*\[(.*?)\]/g, ' \\rightarrow \\text{ [$1] [$2]} ');
+      formula = formula.replace(/->\s*\[(.*?)\]/g, ' \\rightarrow \\text{ [$1]} ');
+      // Replace remaining -> with \rightarrow
+      formula = formula.replace(/->/g, ' \\rightarrow ');
       // Fix stray ^ + or ^ - in chemical reactions (e.g. ^+ or ^-)
       formula = formula.replace(/\^\s*([+-])/g, '^{$1}');
       // Auto-subscript numbers following chemical elements (e.g. CO2 -> CO_2, H2O -> H_2O)
@@ -353,7 +356,18 @@ export class OmmlConverter {
         continue;
       }
 
-      // 5. Normal character / number / Arabic text
+      // 5. Arabic word / phrase: group consecutive Arabic letters and spaces to preserve cursive ligatures
+      if (/[\u0600-\u06FF]/.test(char)) {
+        let arabicWord = '';
+        while (i < input.length && (/[\u0600-\u06FF]/.test(input[i]) || (input[i] === ' ' && i + 1 < input.length && /[\u0600-\u06FF]/.test(input[i + 1])))) {
+          arabicWord += input[i];
+          i++;
+        }
+        output += `<m:r><m:rPr><m:nor/></m:rPr><m:t>${this.escapeXml(arabicWord)}</m:t></m:r>`;
+        continue;
+      }
+
+      // 6. Normal character / number
       output += this.createRun(char);
       i++;
     }
