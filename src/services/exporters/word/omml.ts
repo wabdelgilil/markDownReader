@@ -385,15 +385,19 @@ export class OmmlConverter {
     }
 
     const tagName = match[1];
-    const openTag = `<${tagName}`;
+    const closeTag = `</${tagName}>`;
     let depth = 0;
     let openIdx = -1;
 
-    // Scan backwards
+    // Scan backwards ensuring exact tag boundary match
     for (let pos = output.length - 1; pos >= 0; pos--) {
-      if (output.startsWith(`</${tagName}>`, pos)) {
+      if (output.startsWith(closeTag, pos)) {
         depth++;
-      } else if (output.startsWith(openTag, pos)) {
+      } else if (
+        output.startsWith(`<${tagName}>`, pos) ||
+        output.startsWith(`<${tagName} `, pos) ||
+        output.startsWith(`<${tagName}/>`, pos)
+      ) {
         depth--;
         if (depth === 0) {
           openIdx = pos;

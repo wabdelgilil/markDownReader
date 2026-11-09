@@ -8,7 +8,8 @@ import {
   Presentation,
   Activity,
   FolderTree,
-  ListTree
+  ListTree,
+  Highlighter
 } from 'lucide-react';
 import { ReadingTheme } from '../../core/types';
 import { documentStore } from '../../services/document.store';
@@ -29,10 +30,13 @@ interface NavbarProps {
   onOpenDiagramThemes: () => void;
   onToggleWorkspace?: () => void;
   onToggleOutline?: () => void;
+  onToggleAnnotations?: () => void;
   hasOpenTabs: boolean;
   hasOpenWorkspace?: boolean;
   hasOpenOutline?: boolean;
+  hasOpenAnnotations?: boolean;
   headingsCount?: number;
+  annotationCount?: number;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -44,10 +48,13 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenDiagramThemes,
   onToggleWorkspace,
   onToggleOutline,
+  onToggleAnnotations,
   hasOpenTabs,
   hasOpenWorkspace,
   hasOpenOutline,
+  hasOpenAnnotations,
   headingsCount,
+  annotationCount,
 }) => {
   const { t, locale, toggleLocale } = useI18n();
   const [isFullscreen, setIsFullscreen] = useState(FullscreenService.isFullscreen());
@@ -132,6 +139,27 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           )}
 
+          {/* Highlights & Annotations Drawer Toggle */}
+          {hasOpenTabs && onToggleAnnotations && (
+            <button
+              onClick={onToggleAnnotations}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer ${
+                hasOpenAnnotations
+                  ? 'bg-theme-accent/15 text-theme-accent border-theme-accent/40 font-semibold'
+                  : 'bg-theme-bg hover:bg-theme-border/60 text-theme-text border-theme-border'
+              }`}
+              title={t.navbar.toggleAnnotationsTooltip}
+            >
+              <Highlighter className="w-3.5 h-3.5 text-amber-400" />
+              <span className="hidden xl:inline">{t.navbar.toggleAnnotations}</span>
+              {(annotationCount ?? 0) > 0 && (
+                <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-theme-accent text-white">
+                  {annotationCount}
+                </span>
+              )}
+            </button>
+          )}
+
           {hasOpenTabs && (
             <>
               {/* Fullscreen Reading Mode Toggle */}
@@ -168,6 +196,25 @@ export const Navbar: React.FC<NavbarProps> = ({
               >
                 <Activity className="w-3.5 h-3.5 text-emerald-400" />
                 <span className="hidden md:inline">{t.navbar.diagnostics}</span>
+              </button>
+
+              {/* Annotations & Highlights Studio */}
+              <button
+                onClick={onToggleAnnotations}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer ${
+                  hasOpenAnnotations
+                    ? 'bg-amber-500/15 text-amber-400 border-amber-500/40 font-semibold'
+                    : 'bg-theme-bg hover:bg-theme-border/60 text-theme-text border-theme-border'
+                }`}
+                title={locale === 'ar' ? 'التظليلات والملاحظات (Ctrl+H)' : 'Annotations & Notes (Ctrl+H)'}
+              >
+                <Highlighter className="w-3.5 h-3.5 text-amber-400" />
+                <span className="hidden md:inline">{locale === 'ar' ? 'التظليلات' : 'Annotations'}</span>
+                {typeof annotationCount === 'number' && annotationCount > 0 && (
+                  <span className="text-[10px] px-1 rounded-full bg-amber-500/20 text-amber-400 font-mono border border-amber-500/30">
+                    {annotationCount}
+                  </span>
+                )}
               </button>
 
               {/* Multi-Format Export Dropdown */}

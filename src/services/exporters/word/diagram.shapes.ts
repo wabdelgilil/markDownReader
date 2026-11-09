@@ -25,6 +25,12 @@ export interface WordDiagramEdge {
 }
 
 export class WordDiagramShapeEngine {
+  private static shapeCounter = 1;
+
+  private static nextId(prefix: string): string {
+    return `${prefix}_${this.shapeCounter++}`;
+  }
+
   /**
    * Transforms diagram code into native Microsoft Word OpenXML shape elements.
    * If parsing succeeds, returns `<w:p>...<w:pict>...</w:pict>...</w:p>`.
@@ -169,8 +175,10 @@ export class WordDiagramShapeEngine {
       n.y = n.y - minY + padding;
     });
 
-    // Build VML XML string
-    let vmlContent = `<v:group style="width:500pt;height:${Math.round((canvasHeight / canvasWidth) * 500)}pt;position:relative" coordorigin="0 0" coordsize="${canvasWidth} ${canvasHeight}">`;
+    const groupId = this.nextId('vml_grp');
+
+    // Build VML XML string - mandatory ID on v:group and every child shape for OpenXML compliance
+    let vmlContent = `<v:group id="${groupId}" style="width:500pt;height:${Math.round((canvasHeight / canvasWidth) * 500)}pt;position:relative" coordorigin="0 0" coordsize="${canvasWidth} ${canvasHeight}">`;
 
     // 1. Render Connectors (Lines with arrows)
     edges.forEach((edge) => {
@@ -184,8 +192,9 @@ export class WordDiagramShapeEngine {
       const toY = Math.round(toNode.y + (isLR ? toNode.height / 2 : 0));
 
       const strokeDash = edge.isDashed ? 'dashstyle="dash"' : '';
+      const lineId = this.nextId('vml_line');
 
-      vmlContent += `<v:line from="${fromX},${fromY}" to="${toX},${toY}" strokecolor="#64748b" strokeweight="1.75pt" ${strokeDash}>
+      vmlContent += `<v:line id="${lineId}" from="${fromX},${fromY}" to="${toX},${toY}" strokecolor="#64748b" strokeweight="1.75pt" ${strokeDash}>
         <v:stroke endarrow="classic" endarrowwidth="medium" endarrowlength="medium"/>
       </v:line>`;
 
@@ -193,7 +202,8 @@ export class WordDiagramShapeEngine {
       if (edge.label) {
         const midX = Math.round((fromX + toX) / 2 - 40);
         const midY = Math.round((fromY + toY) / 2 - 12);
-        vmlContent += `<v:rect style="position:absolute;left:${midX};top:${midY};width:80;height:24" fillcolor="#f8fafc" stroked="f">
+        const labelRectId = this.nextId('vml_lbl');
+        vmlContent += `<v:rect id="${labelRectId}" style="position:absolute;left:${midX};top:${midY};width:80;height:24" fillcolor="#f8fafc" stroked="f">
           <v:textbox inset="2pt,2pt,2pt,2pt">
             <w:txbxContent>
               <w:p>
@@ -231,7 +241,9 @@ export class WordDiagramShapeEngine {
         extraAttrs = '';
       }
 
-      vmlContent += `<${shapeTag} style="position:absolute;left:${x};top:${y};width:${w};height:${h}" ${extraAttrs} fillcolor="${node.fillColor}" strokecolor="${node.strokeColor}" strokeweight="1.5pt">
+      const shapeId = this.nextId('vml_shape');
+
+      vmlContent += `<${shapeTag} id="${shapeId}" style="position:absolute;left:${x};top:${y};width:${w};height:${h}" ${extraAttrs} fillcolor="${node.fillColor}" strokecolor="${node.strokeColor}" strokeweight="1.5pt">
         <v:shadow on="t" color="#cbd5e1" offset="2pt,2pt"/>
         <v:textbox inset="6pt,6pt,6pt,6pt">
           <w:txbxContent>
@@ -286,16 +298,17 @@ export class WordDiagramShapeEngine {
       if (clean) childNodes.push(clean);
     }
 
-    // Build central hub mindmap with radiating blocks
     const canvasWidth = 700;
     const canvasHeight = Math.max(200 + childNodes.length * 70, 360);
     const rootX = 60;
     const rootY = Math.round(canvasHeight / 2 - 35);
 
-    let vml = `<v:group style="width:480pt;height:${Math.round((canvasHeight / canvasWidth) * 480)}pt;position:relative" coordorigin="0 0" coordsize="${canvasWidth} ${canvasHeight}">`;
+    const groupId = this.nextId('vml_grp');
+    let vml = `<v:group id="${groupId}" style="width:480pt;height:${Math.round((canvasHeight / canvasWidth) * 480)}pt;position:relative" coordorigin="0 0" coordsize="${canvasWidth} ${canvasHeight}">`;
 
     // Root Node
-    vml += `<v:roundrect style="position:absolute;left:${rootX};top:${rootY};width:160;height:70" arcsize="0.3" fillcolor="#4f46e5" strokecolor="#3730a3" strokeweight="2pt">
+    const rootId = this.nextId('vml_root');
+    vml += `<v:roundrect id="${rootId}" style="position:absolute;left:${rootX};top:${rootY};width:160;height:70" arcsize="0.3" fillcolor="#4f46e5" strokecolor="#3730a3" strokeweight="2pt">
       <v:shadow on="t" color="#cbd5e1" offset="2pt,2pt"/>
       <v:textbox inset="6pt,6pt,6pt,6pt">
         <w:txbxContent>
@@ -320,14 +333,16 @@ export class WordDiagramShapeEngine {
 
     childNodes.forEach((childText, idx) => {
       const childY = Math.round(startY + idx * stepY);
+      const lineId = this.nextId('vml_line');
+      const childId = this.nextId('vml_node');
 
       // Connecting line
-      vml += `<v:line from="${rootX + 160},${rootY + 35}" to="${childX},${childY + 25}" strokecolor="#818cf8" strokeweight="2pt">
+      vml += `<v:line id="${lineId}" from="${rootX + 160},${rootY + 35}" to="${childX},${childY + 25}" strokecolor="#818cf8" strokeweight="2pt">
         <v:stroke endarrow="classic" endarrowwidth="medium"/>
       </v:line>`;
 
       // Child block
-      vml += `<v:roundrect style="position:absolute;left:${childX};top:${childY};width:180;height:50" arcsize="0.2" fillcolor="#0d9488" strokecolor="#0f766e" strokeweight="1.5pt">
+      vml += `<v:roundrect id="${childId}" style="position:absolute;left:${childX};top:${childY};width:180;height:50" arcsize="0.2" fillcolor="#0d9488" strokecolor="#0f766e" strokeweight="1.5pt">
         <v:textbox inset="4pt,4pt,4pt,4pt">
           <w:txbxContent>
             <w:p>
@@ -360,7 +375,6 @@ export class WordDiagramShapeEngine {
     const layers: WordDiagramNode[][] = [];
     const visited = new Set<string>();
 
-    // Nodes without incoming edges are roots
     const hasIncoming = new Set(edges.map((e) => e.toId));
     let currentLayer = nodes.filter((n) => !hasIncoming.has(n.id));
 
@@ -385,7 +399,6 @@ export class WordDiagramShapeEngine {
         }
       });
 
-      // If disconnected or cyclic components remain
       if (nextLayer.length === 0) {
         const remaining = nodes.filter((n) => !visited.has(n.id));
         if (remaining.length > 0) {
@@ -400,7 +413,6 @@ export class WordDiagramShapeEngine {
       currentLayer = nextLayer;
     }
 
-    // Assign X and Y based on layer grid
     const layerSpacing = isLR ? 240 : 120;
     const nodeSpacing = isLR ? 90 : 200;
 
@@ -422,9 +434,6 @@ export class WordDiagramShapeEngine {
     });
   }
 
-  /**
-   * Clean structured editable Word table block for complex chart/diagram types.
-   */
   private static renderStructuredCalloutBlock(code: string): string {
     const cleanLines = code.split('\n').filter((l) => l.trim());
     const headerTitle = cleanLines[0] || 'Diagram Structure';

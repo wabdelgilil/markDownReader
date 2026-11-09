@@ -18,6 +18,8 @@ export interface TranslationDictionary {
     diagramThemesTooltip: string;
     toggleOutline: string;
     toggleOutlineTooltip: string;
+    toggleAnnotations: string;
+    toggleAnnotationsTooltip: string;
     themes: {
       light: string;
       dark: string;
@@ -110,5 +112,33 @@ export interface TranslationDictionary {
     prevTooltip: string;
     nextTooltip: string;
     fullscreenTooltip: string;
+  };
+  annotations: {
+    drawerTitle: string;
+    drawerSubtitle: string;
+    emptyText: string;
+    emptySubtitle: string;
+    addNote: string;
+    editNote: string;
+    saveNote: string;
+    cancel: string;
+    deleteHighlight: string;
+    clearAll: string;
+    clearAllConfirm: string;
+    copyText: string;
+    copied: string;
+    exportMarkdown: string;
+    exportClipboard: string;
+    filterAll: string;
+    searchPlaceholder: string;
+    highlightCount: string;
+    toggleButtonTooltip: string;
+    colors: {
+      yellow: string;
+      green: string;
+      blue: string;
+      pink: string;
+      purple: string;
+    };
   };
 }

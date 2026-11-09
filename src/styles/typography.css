@@ -54,3 +54,23 @@ article input[type="checkbox"] {
   @apply rounded border-theme-border text-theme-accent focus:ring-0;
   margin-inline-end: 0.5rem;
 }
+
+/* Hyperlinks & Smart Navigation */
+article a.markdown-link {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  word-break: break-word;
+}
+
+article a.markdown-link:hover {
+  filter: brightness(1.15);
+}
+
+article a.external-link svg {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+article a.heading-anchor {
+  text-decoration: none !important;
+  user-select: none;
+}

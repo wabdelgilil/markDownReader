@@ -8,6 +8,10 @@ import { DiagramModal } from './components/DiagramModal';
 import { DiagramThemeModal } from './components/DiagramThemeModal';
 import { WorkspaceTree } from './components/WorkspaceTree';
 import { FileDropOverlay } from './components/FileDropOverlay';
+import { AnnotationDrawer } from './components/annotations/AnnotationDrawer';
+import { DomHighlighter } from '../services/highlighter.dom';
+import { annotationStore } from '../services/annotation.store';
+import { Annotation } from '../core/types/annotation';
 import { ThemeService } from '../services/theme.service';
 import { I18nService } from '../services/i18n.service';
 import { FullscreenService } from '../services/fullscreen.service';
@@ -24,6 +28,9 @@ export const App: React.FC = () => {
   const [showDiagnostics, setShowDiagnostics] = useState(false);
   const [showDiagramThemes, setShowDiagramThemes] = useState(false);
   const [showWorkspaceTree, setShowWorkspaceTree] = useState(false);
+  const [showAnnotations, setShowAnnotations] = useState(false);
+  const [annotations, setAnnotations] = useState<Annotation[]>([]);
+  const [externalEditAnnotation, setExternalEditAnnotation] = useState<Annotation | null>(null);
   const [showOutline, setShowOutline] = useState<boolean>(() => {
     try {
       return localStorage.getItem('markdown_reader_show_outline') !== 'false';
@@ -50,6 +57,20 @@ export const App: React.FC = () => {
     return unsubscribe;
   }, []);
 
+  // Sync annotations when activeTab changes or annotation store updates
+  useEffect(() => {
+    const update = () => {
+      if (activeTab?.id) {
+        setAnnotations(annotationStore.getAnnotations(activeTab.id));
+      } else {
+        setAnnotations([]);
+      }
+    };
+    update();
+    const unsubscribe = annotationStore.subscribe(update);
+    return unsubscribe;
+  }, [activeTab?.id]);
+
   const handleToggleOutline = () => {
     setShowOutline((prev) => {
       const next = !prev;
@@ -71,6 +92,9 @@ export const App: React.FC = () => {
       } else if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === 'b' || (e.shiftKey && e.key.toLowerCase() === 'o'))) {
         e.preventDefault();
         handleToggleOutline();
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'h') {
+        e.preventDefault();
+        setShowAnnotations((prev) => !prev);
       } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'w') {
         e.preventDefault();
         if (activeTab) {
@@ -157,10 +181,13 @@ export const App: React.FC = () => {
         onOpenDiagramThemes={() => setShowDiagramThemes(true)}
         onToggleWorkspace={() => setShowWorkspaceTree((prev) => !prev)}
         onToggleOutline={handleToggleOutline}
+        onToggleAnnotations={() => setShowAnnotations((prev) => !prev)}
         hasOpenTabs={activeTab !== null}
         hasOpenWorkspace={showWorkspaceTree}
         hasOpenOutline={showOutline}
+        hasOpenAnnotations={showAnnotations}
         headingsCount={activeTab?.parsed?.headings.length}
+        annotationCount={annotations.length}
       />
 
       {/* Main Workspace Body */}
@@ -198,12 +225,34 @@ export const App: React.FC = () => {
         {/* Central Markdown Render View */}
         <DocumentViewer
           document={activeTab?.parsed || null}
+          docId={activeTab?.id || ''}
+          annotations={annotations}
           diagrams={documentStore.getActiveDiagrams()}
           theme={theme}
           diagramStyleVersion={diagramStyleVersion}
           onLoadSample={handleLoadSample}
           onFocusDiagram={(svgHtml, rawCode) => setFocusedDiagram({ svgHtml, rawCode })}
+          externalEditAnnotation={externalEditAnnotation}
+          onClearExternalEdit={() => setExternalEditAnnotation(null)}
         />
+
+        {/* Highlights & Reference Annotations Drawer */}
+        {activeTab && (
+          <AnnotationDrawer
+            isOpen={showAnnotations}
+            docId={activeTab.id}
+            docTitle={activeTab.name}
+            annotations={annotations}
+            onClose={() => setShowAnnotations(false)}
+            onNavigateTo={(id) => {
+              const container = document.getElementById('document-scroll-container');
+              if (container) {
+                DomHighlighter.scrollToAnnotation(container, id);
+              }
+            }}
+            onOpenEdit={(item) => setExternalEditAnnotation(item)}
+          />
+        )}
       </div>
 
       {/* Global Drag-and-Drop Dropzone Overlay */}

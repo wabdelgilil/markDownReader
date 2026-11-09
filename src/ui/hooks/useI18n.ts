@@ -3,6 +3,7 @@ import { I18nService, AppLocale, TranslationDictionary } from '../../services/i1
 
 export function useI18n(): {
   locale: AppLocale;
+  isRtl: boolean;
   t: TranslationDictionary;
   toggleLocale: () => void;
   setLocale: (locale: AppLocale) => void;
@@ -17,6 +18,7 @@ export function useI18n(): {
 
   return {
     locale,
+    isRtl: locale === 'ar',
     t: I18nService.t(),
     toggleLocale: () => I18nService.toggleLocale(),
     setLocale: (newLocale: AppLocale) => I18nService.setLocale(newLocale),

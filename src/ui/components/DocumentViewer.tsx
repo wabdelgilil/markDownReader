@@ -1,6 +1,11 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { ParsedDocument, ReadingTheme } from '../../core/types';
+import { Annotation, HighlightColor } from '../../core/types/annotation';
 import { DiagramEngine } from '../../core/diagrams/mermaid';
+import { DomHighlighter } from '../../services/highlighter.dom';
+import { annotationStore } from '../../services/annotation.store';
+import { HighlightToolbar } from './annotations/HighlightToolbar';
+import { AnnotationPopover } from './annotations/AnnotationPopover';
 import { FileQuestion, FolderOpen, BookOpen } from 'lucide-react';
 import { documentStore } from '../../services/document.store';
 import { webAdapter } from '../../adapters/web.adapter';
@@ -8,23 +13,39 @@ import { useI18n } from '../hooks/useI18n';
 
 interface DocumentViewerProps {
   document: ParsedDocument | null;
+  docId?: string;
+  annotations?: Annotation[];
   diagrams: Map<string, string>;
   theme?: ReadingTheme;
   diagramStyleVersion?: number;
   onLoadSample: () => void;
   onFocusDiagram?: (svgHtml: string, rawCode: string) => void;
+  externalEditAnnotation?: Annotation | null;
+  onClearExternalEdit?: () => void;
 }
 
 export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   document,
+  docId = '',
+  annotations = [],
   diagrams,
   theme,
   diagramStyleVersion,
   onLoadSample,
   onFocusDiagram,
+  externalEditAnnotation,
+  onClearExternalEdit,
 }) => {
   const { t } = useI18n();
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Floating Selection Toolbar State
+  const [toolbarPos, setToolbarPos] = useState<{ top: number; left: number } | null>(null);
+  const [selectedText, setSelectedText] = useState<string>('');
+
+  // Inline Mark Popover State
+  const [popoverAnn, setPopoverAnn] = useState<Annotation | null>(null);
+  const [popoverPos, setPopoverPos] = useState<{ top: number; left: number } | null>(null);
 
   // Trigger Mermaid SVG rendering whenever the document, diagrams, theme, or diagram style change
   useEffect(() => {
@@ -33,7 +54,89 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     }
   }, [document?.html, diagrams, theme, diagramStyleVersion]);
 
-  // Enable smooth mouse drag-to-pan on all inline diagram targets
+  // Apply In-DOM Highlights whenever HTML or annotations change
+  useEffect(() => {
+    if (containerRef.current && document) {
+      DomHighlighter.apply(containerRef.current, annotations);
+    }
+  }, [document?.html, annotations]);
+
+  // Handle External Edit requests triggered from Drawer
+  useEffect(() => {
+    if (externalEditAnnotation && containerRef.current) {
+      DomHighlighter.scrollToAnnotation(containerRef.current, externalEditAnnotation.id);
+      const mark = containerRef.current.querySelector(
+        `mark[data-annotation-id="${externalEditAnnotation.id}"]`
+      ) as HTMLElement;
+      if (mark) {
+        const rect = mark.getBoundingClientRect();
+        setPopoverAnn(externalEditAnnotation);
+        setPopoverPos({ top: rect.bottom, left: rect.left + rect.width / 2 });
+      }
+      onClearExternalEdit?.();
+    }
+  }, [externalEditAnnotation, onClearExternalEdit]);
+
+  // Handle Mouse Selection for Floating Toolbar
+  const handleMouseUp = useCallback(() => {
+    const selection = window.getSelection();
+    if (!selection || selection.isCollapsed) {
+      setToolbarPos(null);
+      setSelectedText('');
+      return;
+    }
+
+    const text = selection.toString().trim();
+    if (!text || text.length < 2) {
+      setToolbarPos(null);
+      setSelectedText('');
+      return;
+    }
+
+    // Ensure selection originated inside markdown container
+    if (selection.rangeCount > 0) {
+      const range = selection.getRangeAt(0);
+      if (containerRef.current?.contains(range.commonAncestorContainer)) {
+        const rect = range.getBoundingClientRect();
+        setToolbarPos({
+          top: rect.top,
+          left: rect.left + rect.width / 2,
+        });
+        setSelectedText(text);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => window.removeEventListener('mouseup', handleMouseUp);
+  }, [handleMouseUp]);
+
+  // Apply new highlight from floating toolbar
+  const handleApplyHighlight = (color: HighlightColor, openNote?: boolean) => {
+    if (!document || !docId || !selectedText) return;
+
+    const newAnn = annotationStore.addAnnotation(docId, selectedText, color);
+    window.getSelection()?.removeAllRanges();
+    setToolbarPos(null);
+    setSelectedText('');
+
+    if (openNote) {
+      setTimeout(() => {
+        if (!containerRef.current) return;
+        const mark = containerRef.current.querySelector(
+          `mark[data-annotation-id="${newAnn.id}"]`
+        ) as HTMLElement;
+        if (mark) {
+          const rect = mark.getBoundingClientRect();
+          setPopoverAnn(newAnn);
+          setPopoverPos({ top: rect.bottom, left: rect.left + rect.width / 2 });
+        }
+      }, 50);
+    }
+  };
+
+  // Enable smooth mouse drag-to-pan on inline diagrams
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -87,9 +190,24 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     };
   }, [document?.html]);
 
-  // Handle Diagram Zoom, SVG Export, and Notion Code Copy Buttons via event delegation
+  // Event Delegation for Code Copy, Diagram Actions, and Mark Clicks
   const handleContainerClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    // 1. Check for Code Copy Button
+    // 1. Check for Highlight Mark Click
+    const mark = (e.target as HTMLElement).closest('mark.mdfull-highlight') as HTMLElement;
+    if (mark) {
+      const annId = mark.getAttribute('data-annotation-id');
+      if (annId) {
+        const found = annotations.find((a) => a.id === annId);
+        if (found) {
+          const rect = mark.getBoundingClientRect();
+          setPopoverAnn(found);
+          setPopoverPos({ top: rect.bottom, left: rect.left + rect.width / 2 });
+          return;
+        }
+      }
+    }
+
+    // 2. Check for Code Copy Button
     const copyBtn = (e.target as HTMLElement).closest('.copy-code-btn') as HTMLElement;
     if (copyBtn) {
       const encodedCode = copyBtn.getAttribute('data-code');
@@ -111,7 +229,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
       return;
     }
 
-    // 2. Check for Diagram Zoom & Export Buttons
+    // 3. Check for Diagram Zoom & Export Buttons
     const target = (e.target as HTMLElement).closest('.diagram-action-btn') as HTMLElement;
     if (!target) return;
 
@@ -151,6 +269,69 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
       link.download = `diagram-${Date.now()}.svg`;
       link.click();
       URL.revokeObjectURL(url);
+      return;
+    }
+
+    // 4. Check for Internal Anchor Link Click (#slug)
+    const anchorLink = (e.target as HTMLElement).closest('a[data-internal-anchor], a[href^="#"]') as HTMLAnchorElement;
+    if (anchorLink) {
+      const targetSlug = anchorLink.getAttribute('data-internal-anchor') ||
+                         anchorLink.getAttribute('href')?.replace(/^#/, '');
+      if (targetSlug) {
+        e.preventDefault();
+        const decoded = decodeURIComponent(targetSlug);
+        const container = containerRef.current;
+        let targetEl: HTMLElement | null = null;
+        if (container) {
+          try {
+            targetEl =
+              container.querySelector(`[id="${CSS.escape(targetSlug)}"]`) ||
+              (container.querySelector(`[id="${CSS.escape(decoded)}"]`) as HTMLElement);
+          } catch {
+            targetEl = window.document.getElementById(targetSlug) || window.document.getElementById(decoded);
+          }
+        }
+        if (!targetEl) {
+          targetEl = window.document.getElementById(targetSlug) || window.document.getElementById(decoded);
+        }
+
+        if (targetEl) {
+          targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+          // Flash visual landing glow
+          targetEl.classList.add('ring-2', 'ring-theme-accent', 'ring-offset-4', 'ring-offset-theme-bg', 'rounded-lg');
+          setTimeout(() => {
+            targetEl?.classList.remove('ring-2', 'ring-theme-accent', 'ring-offset-4', 'ring-offset-theme-bg', 'rounded-lg');
+          }, 1500);
+
+          try {
+            window.history.pushState(null, '', '#' + targetSlug);
+          } catch {
+            // Ignore in sandboxed contexts
+          }
+        }
+        return;
+      }
+    }
+
+    // 5. Check for Workspace Markdown File Link Click (.md)
+    const workspaceLink = (e.target as HTMLElement).closest('a[data-workspace-link]') as HTMLAnchorElement;
+    if (workspaceLink) {
+      e.preventDefault();
+      const rawPath = workspaceLink.getAttribute('data-workspace-link');
+      if (rawPath) {
+        const cleanPath = rawPath.replace(/^\.\//, '');
+        const fileName = cleanPath.split('/').pop() || cleanPath;
+
+        // Check if tab is already open
+        const existingTab = documentStore.getTabs().find((t) => t.path?.includes(cleanPath) || t.name === fileName);
+        if (existingTab) {
+          documentStore.setActiveTab(existingTab.id);
+        } else {
+          documentStore.openTab(fileName, cleanPath, `# ${fileName}\n\nملف مرتبط في مساحة العمل: \`${cleanPath}\`\n\n> يمكنك استعراض الملفات المحلية أو فتح المستند المطلوب مباشرة من شجرة المجلدات.`);
+        }
+      }
+      return;
     }
   };
 
@@ -192,13 +373,44 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   return (
     <main
       id="document-scroll-container"
-      className="flex-1 h-full overflow-y-auto px-6 py-8 flex justify-center"
+      className="flex-1 h-full overflow-y-auto px-6 py-8 flex justify-center relative"
     >
       <article
         ref={containerRef}
         onClick={handleContainerClick}
         className="max-w-4xl w-full text-theme-text leading-relaxed font-sans text-sm md:text-base space-y-4"
         dangerouslySetInnerHTML={{ __html: document.html }}
+      />
+
+      {/* Floating Selection Toolbar */}
+      <HighlightToolbar
+        position={toolbarPos}
+        selectedText={selectedText}
+        onApplyHighlight={handleApplyHighlight}
+        onClose={() => {
+          setToolbarPos(null);
+          setSelectedText('');
+        }}
+      />
+
+      {/* Inline Mark Annotation Popover */}
+      <AnnotationPopover
+        annotation={popoverAnn}
+        position={popoverPos}
+        onUpdate={(id, updates) => {
+          annotationStore.updateAnnotation(id, updates);
+          setPopoverAnn(null);
+          setPopoverPos(null);
+        }}
+        onDelete={(id) => {
+          annotationStore.deleteAnnotation(id);
+          setPopoverAnn(null);
+          setPopoverPos(null);
+        }}
+        onClose={() => {
+          setPopoverAnn(null);
+          setPopoverPos(null);
+        }}
       />
     </main>
   );

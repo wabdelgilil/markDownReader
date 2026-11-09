@@ -56,3 +56,6 @@ export interface DocumentTab {
   isModified?: boolean;
 }
 
+export * from './types/annotation';
+
+

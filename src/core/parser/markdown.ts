@@ -17,6 +17,17 @@ import {
  */
 export class MarkdownPipeline {
   /**
+   * Generates a deterministic, URL-safe slug from arbitrary text supporting Arabic and Latin scripts.
+   */
+  public static generateSlug(text: string): string {
+    return text
+      .toLowerCase()
+      .replace(/<[^>]*>/g, '')
+      .replace(/[^\w\u0600-\u06FF]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  }
+
+  /**
    * Primary entry point: transforms raw markdown into a fully typed ParsedDocument.
    */
   public static parse(raw: string): {
@@ -38,7 +49,7 @@ export class MarkdownPipeline {
     // 4. Process GitHub Alerts / Callouts
     const withCallouts = this.transformCallouts(withoutMath);
 
-    // 5. Configure Marked parser with custom heading and paragraph hooks
+    // 5. Configure Marked parser with custom heading, link, and paragraph hooks
     const markedInstance = new Marked({
       gfm: true,
       breaks: true,
@@ -48,22 +59,41 @@ export class MarkdownPipeline {
       renderer: {
         heading(this: { parser: { parseInline: (tokens: Tokens.Generic[]) => string } }, { tokens, depth }: Tokens.Heading): string {
           const text = this.parser.parseInline(tokens);
-          const slug = text
-            .toLowerCase()
-            .replace(/<[^>]*>/g, '')
-            .replace(/[^\w\u0600-\u06FF]+/g, '-')
-            .replace(/^-+|-+$/g, '');
-
+          const slug = MarkdownPipeline.generateSlug(text);
           const headingId = slug || `section-${headings.length + 1}`;
           const plainText = text.replace(/<[^>]*>/g, '');
           
           headings.push({ id: headingId, text: plainText, level: depth });
 
           const dir = BiDiArbitrator.detectDirection(plainText);
-          return `<h${depth} id="${headingId}" class="markdown-heading font-semibold scroll-mt-20 my-4 text-theme-text" dir="${dir}">
-            <a href="#${headingId}" class="heading-anchor text-theme-muted hover:text-theme-accent transition-colors ml-1.5 opacity-60 hover:opacity-100">#</a>
+          return `<h${depth} id="${headingId}" class="markdown-heading font-semibold scroll-mt-20 my-4 text-theme-text transition-all duration-300" dir="${dir}">
+            <a href="#${headingId}" data-internal-anchor="${headingId}" class="heading-anchor text-theme-muted hover:text-theme-accent transition-colors ml-1.5 opacity-60 hover:opacity-100" title="رابط مباشر للعنوان">#</a>
             ${text}
           </h${depth}>`;
+        },
+        link(this: { parser: { parseInline: (tokens: Tokens.Generic[]) => string } }, { href, title, tokens }: Tokens.Link): string {
+          const text = this.parser.parseInline(tokens);
+          const safeHref = (href || '').trim();
+          const isExternal = /^https?:\/\//i.test(safeHref) || /^mailto:/i.test(safeHref) || /^tel:/i.test(safeHref);
+          const isAnchor = safeHref.startsWith('#');
+          const isWorkspaceDoc = !isExternal && !isAnchor && (safeHref.endsWith('.md') || safeHref.endsWith('.markdown') || safeHref.includes('.md#'));
+          const titleAttr = title ? ` title="${title}"` : '';
+
+          if (isExternal) {
+            return `<a href="${safeHref}" target="_blank" rel="noopener noreferrer"${titleAttr} class="markdown-link external-link inline-flex items-center gap-1 font-medium text-theme-accent hover:text-theme-accent-hover underline underline-offset-4 decoration-theme-accent/40 hover:decoration-theme-accent transition-colors group"><span>${text}</span><svg class="w-3.5 h-3.5 inline-block shrink-0 opacity-70 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>`;
+          }
+
+          if (isAnchor) {
+            const rawTarget = decodeURIComponent(safeHref.slice(1));
+            const normalizedSlug = MarkdownPipeline.generateSlug(rawTarget) || rawTarget;
+            return `<a href="#${normalizedSlug}" data-internal-anchor="${normalizedSlug}" data-raw-target="${rawTarget}"${titleAttr} class="markdown-link internal-anchor-link inline-flex items-center gap-1 font-medium text-theme-accent hover:text-theme-accent-hover underline underline-offset-4 decoration-theme-accent/30 hover:decoration-theme-accent cursor-pointer transition-colors">${text}</a>`;
+          }
+
+          if (isWorkspaceDoc) {
+            return `<a href="${safeHref}" data-workspace-link="${safeHref}"${titleAttr} class="markdown-link workspace-doc-link inline-flex items-center gap-1 font-medium text-indigo-400 hover:text-indigo-300 underline underline-offset-4 decoration-indigo-400/40 hover:decoration-indigo-400 cursor-pointer transition-colors"><span>${text}</span><svg class="w-3.5 h-3.5 inline-block shrink-0 opacity-70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></a>`;
+          }
+
+          return `<a href="${safeHref}"${titleAttr} class="markdown-link font-medium text-theme-accent hover:text-theme-accent-hover underline underline-offset-4 decoration-theme-accent/30 hover:decoration-theme-accent transition-colors">${text}</a>`;
         },
         paragraph(this: { parser: { parseInline: (tokens: Tokens.Generic[]) => string } }, { tokens }: Tokens.Paragraph): string {
           const text = this.parser.parseInline(tokens);
@@ -111,13 +141,15 @@ export class MarkdownPipeline {
 
     const sanitizedHtml = domPurifyInstance.sanitize(withRestoredMath, {
       ADD_TAGS: [
-        'bdi', 'span', 'div', 'button', 'svg', 'path', 'details', 'summary',
-        'table', 'thead', 'tbody', 'tr', 'th', 'td', 'code', 'pre', 'hr',
+        'bdi', 'span', 'div', 'button', 'svg', 'path', 'polyline', 'line', 'rect', 'details', 'summary',
+        'table', 'thead', 'tbody', 'tr', 'th', 'td', 'code', 'pre', 'hr', 'a', 'mark',
       ],
       ADD_ATTR: [
         'dir', 'data-diagram-id', 'data-diagram-code', 'data-latex',
-        'data-action', 'data-code', 'target', 'class', 'id', 'align', 'title', 'style',
-        'aria-hidden',
+        'data-action', 'data-code', 'target', 'rel', 'class', 'id', 'align', 'title', 'style',
+        'aria-hidden', 'href', 'data-internal-anchor', 'data-raw-target', 'data-workspace-link',
+        'data-annotation-id', 'viewBox', 'fill', 'stroke', 'stroke-width', 'stroke-linecap',
+        'stroke-linejoin', 'x1', 'y1', 'x2', 'y2', 'points', 'd',
       ],
     });
 
@@ -215,8 +247,10 @@ export class MarkdownPipeline {
     const validSlugs = new Set(headings.map((h) => h.id));
     const anchorMatches = raw.matchAll(/\[.*?\]\(#([^\)]+)\)/g);
     for (const match of anchorMatches) {
-      const slug = match[1];
-      if (!validSlugs.has(slug)) {
+      const slug = match[1].trim();
+      const decoded = decodeURIComponent(slug);
+      const normalized = this.generateSlug(decoded);
+      if (!validSlugs.has(slug) && !validSlugs.has(decoded) && !validSlugs.has(normalized)) {
         diagnostics.push({
           type: 'dead_anchor',
           message: `رابط داخلي لقسم غير موجود: #${slug}`,

@@ -156,6 +156,12 @@ The architecture strictly adheres to Domain-Driven Design (DDD), SOLID principle
   - **Native Word OMML Equations:** Converts LaTeX mathematical formulas into native Microsoft Word equations (`<m:oMath>` / `<m:oMathPara>`), enabling interactive formula editing within Word.
   - **Native Word Drawing Blocks:** Transforms Mermaid flowcharts and structural diagrams into native Word drawing shapes (`<v:group>`, `<v:roundrect>`, `<v:textbox>`, `<v:line>`) with editable node text and customizable fill styles.
   - **Enterprise Typography & Layout:** Complete RTL Arabic bidirectional paragraph formatting, table structures with borders/shading, code fences, blockquotes, and heading outlines.
+* **FR-29 (Interactive Document Annotations & Highlighting Studio):** Enables live text selections with five theme-calibrated semantic highlight colors (Yellow, Emerald, Sky, Rose, Purple), attached rich notes, non-destructive DOM wrapping, slide-out drawer (`Ctrl+H`) with search/color filtering, in-document scroll-to-mark navigation, and Markdown summary export.
+* **FR-30 (Enterprise Link Orchestration & Smooth Anchor Navigation):** Comprehensive link handling engine that:
+  - Sanitizes and sandboxes external links with `target="_blank"`, `rel="noopener noreferrer"`, and inline vector badge indicators.
+  - Normalizes and routes internal anchor links (`#slug`) with smooth container scrolling and landing attention pulse effects.
+  - Intercepts workspace Markdown file links (`.md`) to seamlessly open target documents as active tabs within the workspace.
+  - Diagnoses dead internal anchors and reports broken references in the Document Health Inspector.
 
 ---
 
