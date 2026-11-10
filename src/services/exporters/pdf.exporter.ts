@@ -290,6 +290,44 @@ export class PdfExporter extends BaseExporter implements IExporter {
       color: #2563eb;
       text-decoration: underline;
     }
+    .heading-anchor,
+    .copy-code-btn {
+      display: none !important;
+    }
+    .notion-code-card {
+      background: #f8fafc;
+      border: 1pt solid #e2e8f0;
+      border-radius: 6pt;
+      margin: 12pt 0;
+      overflow: hidden;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+    .notion-code-card .code-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6pt 10pt;
+      background: #f1f5f9;
+      border-bottom: 1pt solid #e2e8f0;
+      font-family: 'Consolas', monospace;
+      font-size: 8pt;
+      color: #475569;
+    }
+    .notion-code-card pre {
+      margin: 0;
+      border: none;
+      border-radius: 0;
+    }
+    .callout-block {
+      margin: 12pt 0;
+      padding: 10pt 14pt;
+      border-radius: 6pt;
+      border-inline-start-width: 4pt;
+      border-inline-start-style: solid;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
   </style>
 </head>
 <body>
