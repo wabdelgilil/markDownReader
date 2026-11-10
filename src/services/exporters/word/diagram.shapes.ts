@@ -82,7 +82,7 @@ export class WordDiagramShapeEngine {
 
         let label = cleanId;
         if (rawLabel) {
-          label = rawLabel.trim().replace(/^["']|["']$/g, '');
+          label = rawLabel.trim().replace(/^[\(\[\{"']+|[\)\]\}"']+$/g, '').trim();
         }
 
         nodesMap.set(cleanId, {
@@ -99,7 +99,7 @@ export class WordDiagramShapeEngine {
         });
       } else if (rawLabel) {
         const node = nodesMap.get(cleanId)!;
-        node.label = rawLabel.trim().replace(/^["']|["']$/g, '');
+        node.label = rawLabel.trim().replace(/^[\(\[\{"']+|[\)\]\}"']+$/g, '').trim();
         node.shapeType = shapeType;
       }
       return nodesMap.get(cleanId)!;
@@ -178,7 +178,9 @@ export class WordDiagramShapeEngine {
     const groupId = this.nextId('vml_grp');
 
     // Build VML XML string - mandatory ID on v:group and every child shape for OpenXML compliance
-    let vmlContent = `<v:group id="${groupId}" style="width:500pt;height:${Math.round((canvasHeight / canvasWidth) * 500)}pt;position:relative" coordorigin="0 0" coordsize="${canvasWidth} ${canvasHeight}">`;
+    // Strictly inline group layout prevents shape floating and paragraph overlapping
+    const groupHeightPt = Math.round((canvasHeight / canvasWidth) * 480);
+    let vmlContent = `<v:group id="${groupId}" style="width:480pt;height:${groupHeightPt}pt;" coordorigin="0 0" coordsize="${canvasWidth} ${canvasHeight}">`;
 
     // 1. Render Connectors (Lines with arrows)
     edges.forEach((edge) => {
@@ -304,7 +306,8 @@ export class WordDiagramShapeEngine {
     const rootY = Math.round(canvasHeight / 2 - 35);
 
     const groupId = this.nextId('vml_grp');
-    let vml = `<v:group id="${groupId}" style="width:480pt;height:${Math.round((canvasHeight / canvasWidth) * 480)}pt;position:relative" coordorigin="0 0" coordsize="${canvasWidth} ${canvasHeight}">`;
+    const mindmapHeightPt = Math.round((canvasHeight / canvasWidth) * 480);
+    let vml = `<v:group id="${groupId}" style="width:480pt;height:${mindmapHeightPt}pt;" coordorigin="0 0" coordsize="${canvasWidth} ${canvasHeight}">`;
 
     // Root Node
     const rootId = this.nextId('vml_root');
@@ -438,6 +441,19 @@ export class WordDiagramShapeEngine {
     const cleanLines = code.split('\n').filter((l) => l.trim());
     const headerTitle = cleanLines[0] || 'Diagram Structure';
 
+    const bodyLines = cleanLines.slice(1);
+    let codeRuns = '';
+    bodyLines.forEach((line, idx) => {
+      codeRuns += `<w:r>
+        <w:rPr>
+          <w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/>
+          <w:sz w:val="18"/>
+          <w:color w:val="334155"/>
+        </w:rPr>
+        <w:t xml:space="preserve">${this.escapeXml(line)}</w:t>
+      </w:r>${idx < bodyLines.length - 1 ? '<w:r><w:br/></w:r>' : ''}`;
+    });
+
     return `<w:tbl>
       <w:tblPr>
         <w:tblW w:w="5000" w:type="pct"/>
@@ -446,7 +462,7 @@ export class WordDiagramShapeEngine {
           <w:left w:val="single" w:sz="12" w:space="0" w:color="3B82F6"/>
           <w:bottom w:val="single" w:sz="12" w:space="0" w:color="3B82F6"/>
           <w:right w:val="single" w:sz="12" w:space="0" w:color="3B82F6"/>
-          <w:insideH w:val="single" w:sz="4" w:space="0" w:color="E2E8F0"/>
+          <w:insideH w:val="none"/>
           <w:insideV w:val="none"/>
         </w:tblBorders>
         <w:tblCellMar>
@@ -457,11 +473,17 @@ export class WordDiagramShapeEngine {
         </w:tblCellMar>
       </w:tblPr>
       <w:tr>
+        <w:trPr>
+          <w:cantSplit/>
+        </w:trPr>
         <w:tc>
           <w:tcPr>
-            <w:shd w:val="clear" w:color="auto" w:fill="EFF6FF"/>
+            <w:shd w:val="clear" w:color="auto" w:fill="F8FAFC"/>
           </w:tcPr>
           <w:p>
+            <w:pPr>
+              <w:spacing w:before="60" w:after="60"/>
+            </w:pPr>
             <w:r>
               <w:rPr>
                 <w:rFonts w:ascii="Segoe UI" w:hAnsi="Segoe UI" w:cs="Traditional Arabic"/>
@@ -471,14 +493,10 @@ export class WordDiagramShapeEngine {
             </w:r>
           </w:p>
           <w:p>
-            <w:r>
-              <w:rPr>
-                <w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/>
-                <w:sz w:val="18"/>
-                <w:color w:val="475569"/>
-              </w:rPr>
-              <w:t>${this.escapeXml(cleanLines.slice(1).join('\n'))}</w:t>
-            </w:r>
+            <w:pPr>
+              <w:spacing w:before="40" w:after="80"/>
+            </w:pPr>
+            ${codeRuns}
           </w:p>
         </w:tc>
       </w:tr>

@@ -6,18 +6,19 @@
 
 // Greek symbols dictionary
 const GREEK_SYMBOLS: Record<string, string> = {
-  alpha: 'α', beta: 'β', gamma: 'γ', delta: 'δ', epsilon: 'ε',
-  zeta: 'ζ', eta: 'η', theta: 'θ', iota: 'ι', kappa: 'κ',
+  alpha: 'α', beta: 'β', gamma: 'γ', delta: 'δ', epsilon: 'ε', varepsilon: 'ε',
+  zeta: 'ζ', eta: 'η', theta: 'θ', vartheta: 'θ', iota: 'ι', kappa: 'κ',
   lambda: 'λ', mu: 'μ', nu: 'ν', xi: 'ξ', pi: 'π',
-  rho: 'ρ', sigma: 'σ', tau: 'τ', upsilon: 'υ', phi: 'φ',
+  rho: 'ρ', varrho: 'ρ', sigma: 'σ', tau: 'τ', upsilon: 'υ', phi: 'φ', varphi: 'φ',
   chi: 'χ', psi: 'ψ', omega: 'ω',
   Gamma: 'Γ', Delta: 'Δ', Theta: 'Θ', Lambda: 'Λ', Xi: 'Ξ',
   Pi: 'Π', Sigma: 'Σ', Upsilon: 'Υ', Phi: 'Φ', Psi: 'Ψ', Omega: 'Ω',
+  hbar: 'ℏ', ell: 'ℓ', aleph: 'ℵ', Re: 'ℜ', Im: 'ℑ',
 };
 
 // Math operator dictionary
 const OPERATOR_SYMBOLS: Record<string, string> = {
-  pm: '±', mp: '∓', times: '×', div: '÷', cdot: '·',
+  pm: '±', mp: '∓', times: '×', div: '÷', cdot: '⋅',
   ast: '*', star: '⋆', circ: '∘', bullet: '•',
   leq: '≤', geq: '≥', neq: '≠', approx: '≈', sim: '∼',
   equiv: '≡', in: '∈', notin: '∉', subset: '⊂', supset: '⊃',
@@ -74,6 +75,8 @@ export class OmmlConverter {
       formula = formula.replace(/->/g, ' \\rightarrow ');
       // Fix stray ^ + or ^ - in chemical reactions (e.g. ^+ or ^-)
       formula = formula.replace(/\^\s*([+-])/g, '^{$1}');
+      // Fix ionic charges like MnO4- or H+ or 2+
+      formula = formula.replace(/([A-Za-z\d\)]+)([\+\-])(?=[\s\+\-\>\=]|$)/g, '$1^{$2}');
       // Auto-subscript numbers following chemical elements (e.g. CO2 -> CO_2, H2O -> H_2O)
       formula = formula.replace(/([A-Za-z\)])(\d+)/g, '$1_{$2}');
       return formula;
@@ -136,6 +139,15 @@ export class OmmlConverter {
             } else {
               output += matrixXml;
             }
+            continue;
+          }
+
+          // Accents: \hat{x}, \vec{x}, \bar{x}, \dot{x}, \ddot{x}
+          if (['hat', 'vec', 'bar', 'dot', 'ddot'].includes(command)) {
+            const arg = this.extractTokenOrGroup(input, i);
+            i += arg.consumedLength;
+            const accChar = command === 'hat' ? '^' : command === 'vec' ? '→' : command === 'bar' ? '¯' : command === 'dot' ? '˙' : '¨';
+            output += `<m:acc><m:accPr><m:chr m:val="${accChar}"/></m:accPr><m:e>${this.parseExpression(arg.content)}</m:e></m:acc>`;
             continue;
           }
 
