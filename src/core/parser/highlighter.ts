@@ -28,6 +28,24 @@ export class CodeHighlighter {
   };
 
   /**
+   * Tokenizes code into structured Prism tokens for programmatic renderers (e.g. Word OpenXML).
+   */
+  public static tokenize(code: string, lang: string): (string | Prism.Token)[] {
+    const normalizedLang = this.LANG_ALIASES[lang.toLowerCase()] || lang.toLowerCase();
+    const grammar = Prism.languages[normalizedLang];
+
+    if (grammar) {
+      try {
+        return Prism.tokenize(code, grammar);
+      } catch (err) {
+        console.warn(`Prism tokenize error for ${lang}:`, err);
+      }
+    }
+
+    return [code];
+  }
+
+  /**
    * Highlights code with Prism tokens or falls back to escaped HTML.
    */
   public static highlight(code: string, lang: string): string {

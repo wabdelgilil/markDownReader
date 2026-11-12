@@ -55,6 +55,19 @@ article input[type="checkbox"] {
   margin-inline-end: 0.5rem;
 }
 
+/* Eliminate duplicate bullet points on task list / checklist items */
+article ul:has(input[type="checkbox"]),
+article li:has(input[type="checkbox"]),
+article li.task-list-item {
+  list-style-type: none !important;
+  padding-inline-start: 0.25rem !important;
+}
+
+/* KaTeX Arabic & Unicode Text Fallback Typography */
+.katex .mord.text {
+  font-family: 'Segoe UI', 'Traditional Arabic', system-ui, sans-serif !important;
+}
+
 /* Hyperlinks & Smart Navigation */
 article a.markdown-link {
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);

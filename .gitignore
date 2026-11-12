@@ -28,6 +28,9 @@ build/
 .DS_Store
 Thumbs.db
 
+# GitHub Workflows (avoid OAuth scope conflicts)
+.github/
+
 # Log files
 npm-debug.log*
 yarn-debug.log*

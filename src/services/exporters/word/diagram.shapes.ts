@@ -4,6 +4,12 @@
  * Enables users to click, edit, reposition, and format diagram elements as native Word shapes.
  */
 
+import { SequenceVmlBuilder } from './diagrams/sequence.vml';
+import { MindmapVmlBuilder } from './diagrams/mindmap.vml';
+import { ErVmlBuilder } from './diagrams/er.vml';
+import { GitGraphVmlBuilder } from './diagrams/gitgraph.vml';
+import { GanttVmlBuilder } from './diagrams/gantt.vml';
+
 export interface WordDiagramNode {
   id: string;
   label: string;
@@ -38,12 +44,42 @@ export class WordDiagramShapeEngine {
   public static generateWordShapes(diagramCode: string): string {
     const trimmed = diagramCode.trim();
 
-    // Check if it is a flowchart / graph
+    // 1. Flowchart / Graph
     if (/^(flowchart|graph)\s+/i.test(trimmed)) {
       return this.renderFlowchartAsShapes(trimmed);
     }
 
-    // Mindmap and other diagrams render as clean, structured, non-overlapping callout blocks
+    // 2. UML Sequence Diagram
+    if (/^sequenceDiagram/i.test(trimmed)) {
+      const res = SequenceVmlBuilder.render(trimmed);
+      if (res) return res;
+    }
+
+    // 3. Entity-Relationship (ER) Diagram
+    if (/^erDiagram/i.test(trimmed)) {
+      const res = ErVmlBuilder.render(trimmed);
+      if (res) return res;
+    }
+
+    // 4. Git Graph
+    if (/^gitGraph/i.test(trimmed)) {
+      const res = GitGraphVmlBuilder.render(trimmed);
+      if (res) return res;
+    }
+
+    // 5. Mindmap
+    if (/^mindmap/i.test(trimmed)) {
+      const res = MindmapVmlBuilder.render(trimmed);
+      if (res) return res;
+    }
+
+    // 6. Gantt Roadmap
+    if (/^gantt/i.test(trimmed)) {
+      const res = GanttVmlBuilder.render(trimmed);
+      if (res) return res;
+    }
+
+    // Fallback: structured callout block
     return this.renderStructuredCalloutBlock(trimmed);
   }
 

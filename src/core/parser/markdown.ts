@@ -66,9 +66,9 @@ export class MarkdownPipeline {
           headings.push({ id: headingId, text: plainText, level: depth });
 
           const dir = BiDiArbitrator.detectDirection(plainText);
-          return `<h${depth} id="${headingId}" class="markdown-heading font-semibold scroll-mt-20 my-4 text-theme-text transition-all duration-300" dir="${dir}">
-            <a href="#${headingId}" data-internal-anchor="${headingId}" class="heading-anchor text-theme-muted hover:text-theme-accent transition-colors ml-1.5 opacity-60 hover:opacity-100" title="رابط مباشر للعنوان">#</a>
+          return `<h${depth} id="${headingId}" class="markdown-heading group font-semibold scroll-mt-20 my-4 text-theme-text transition-all duration-300" dir="${dir}">
             ${text}
+            <a href="#${headingId}" data-internal-anchor="${headingId}" class="heading-anchor text-theme-muted hover:text-theme-accent transition-opacity mx-2 opacity-0 group-hover:opacity-100" title="رابط مباشر للعنوان" aria-label="رابط مباشر للعنوان">🔗</a>
           </h${depth}>`;
         },
         link(this: { parser: { parseInline: (tokens: Tokens.Generic[]) => string } }, { href, title, tokens }: Tokens.Link): string {

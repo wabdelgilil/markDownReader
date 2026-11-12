@@ -68,7 +68,8 @@ export class MathTransformer {
     try {
       const renderedHtml = katex.renderToString(latex, {
         displayMode,
-        throwOnError: true,
+        throwOnError: false,
+        strict: false,
         output: 'html', // Clean HTML with CSS typography
         trust: true,
       });
