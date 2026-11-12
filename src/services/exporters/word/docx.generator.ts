@@ -22,9 +22,14 @@ const ELEMENT_NODE = 1;
  */
 export class DocxGenerator {
   private static bookmarkCounter = 1;
+  private static numInstanceCounter = 0;
 
   private static nextBookmarkId(): number {
     return this.bookmarkCounter++;
+  }
+
+  private static nextNumId(): number {
+    return ++this.numInstanceCounter;
   }
 
   private static cleanBookmarkName(raw: string): string {
@@ -37,6 +42,7 @@ export class DocxGenerator {
 
   public static async generate(doc: ParsedDocument, options: ExportOptions): Promise<Blob> {
     const isRtl = options.locale !== 'en';
+    this.numInstanceCounter = 0;
     const zip = new JSZip();
 
     // 1. Static Package Files
@@ -54,6 +60,10 @@ export class DocxGenerator {
     // 2. Main Document Body
     const documentXml = this.buildDocumentXml(doc, options, isRtl);
     zip.file('word/document.xml', documentXml);
+
+    // 3. Numbering Definitions (must match list instances generated in document body)
+    const numberingXml = OpenXmlTemplates.getNumberingXml(this.numInstanceCounter, isRtl);
+    zip.file('word/numbering.xml', numberingXml);
 
     return await zip.generateAsync({
       type: 'blob',
@@ -645,37 +655,68 @@ export class DocxGenerator {
     const hasAnyArabic = items.some((li) => /[\u0600-\u06FF]/.test(li.textContent || ''));
     const isListRtl = defaultRtl || hasAnyArabic;
 
-    items.forEach((li, idx) => {
+    // Check if entire list is a checklist
+    const isChecklist = items.some((li) => li.querySelector('input[type="checkbox"]') !== null);
+
+    if (isChecklist) {
+      // Checklist items use standard clean bullet paragraphs with checkbox symbols
+      items.forEach((li) => {
+        const clone = li.cloneNode(true) as HTMLElement;
+        const checkbox = clone.querySelector('input[type="checkbox"]') as HTMLInputElement | null;
+        let prefix = '☐';
+        let prefixColor = '94A3B8';
+
+        if (checkbox) {
+          const isChecked = checkbox.checked || checkbox.hasAttribute('checked') || li.querySelector('input[checked]') !== null;
+          prefix = isChecked ? '☑' : '☐';
+          prefixColor = isChecked ? '10B981' : '94A3B8';
+          checkbox.remove();
+        }
+
+        const runs = this.convertInlineRuns(clone, isListRtl);
+
+        xml += `
+          <w:p>
+            <w:pPr>
+              ${isListRtl ? '<w:bidi/><w:jc w:val="right"/>' : '<w:jc w:val="left"/>'}
+              <w:spacing w:before="50" w:after="50"/>
+              <w:ind w:${isListRtl ? 'right' : 'left'}="480" w:hanging="240"/>
+            </w:pPr>
+            <w:r>
+              <w:rPr>
+                <w:rFonts w:ascii="Segoe UI" w:hAnsi="Segoe UI" w:cs="Traditional Arabic"/>
+                <w:b/>
+                <w:color w:val="${prefixColor}"/>
+                ${isListRtl ? '<w:rtl/>' : ''}
+              </w:rPr>
+              <w:t xml:space="preserve">${prefix}  </w:t>
+            </w:r>
+            ${runs}
+          </w:p>
+        `;
+      });
+      return xml;
+    }
+
+    // Native Microsoft Word Numbering / Bulleting
+    // Each distinct list in the document gets its own unique numId so ordered lists restart from 1.
+    const currentNumId = isOrdered ? this.nextNumId() : (1000 + this.nextNumId());
+
+    items.forEach((li) => {
       const clone = li.cloneNode(true) as HTMLElement;
-      const checkbox = clone.querySelector('input[type="checkbox"]') as HTMLInputElement | null;
-      let prefix = isOrdered ? `${idx + 1}.` : '•';
-      let prefixColor = '3B82F6';
-
-      if (checkbox) {
-        const isChecked = checkbox.checked || checkbox.hasAttribute('checked') || li.querySelector('input[checked]') !== null;
-        prefix = isChecked ? '☑' : '☐';
-        prefixColor = isChecked ? '10B981' : '94A3B8';
-        checkbox.remove();
-      }
-
       const runs = this.convertInlineRuns(clone, isListRtl);
 
       xml += `
         <w:p>
           <w:pPr>
+            <w:pStyle w:val="ListParagraph"/>
+            <w:numPr>
+              <w:ilvl w:val="0"/>
+              <w:numId w:val="${currentNumId}"/>
+            </w:numPr>
             ${isListRtl ? '<w:bidi/><w:jc w:val="right"/>' : '<w:jc w:val="left"/>'}
-            <w:spacing w:before="50" w:after="50"/>
-            <w:ind w:${isListRtl ? 'right' : 'left'}="480" w:hanging="240"/>
+            <w:spacing w:before="40" w:after="40"/>
           </w:pPr>
-          <w:r>
-            <w:rPr>
-              <w:rFonts w:ascii="Segoe UI" w:hAnsi="Segoe UI" w:cs="Traditional Arabic"/>
-              <w:b/>
-              <w:color w:val="${prefixColor}"/>
-              ${isListRtl ? '<w:rtl/>' : ''}
-            </w:rPr>
-            <w:t xml:space="preserve">${prefix}  </w:t>
-          </w:r>
           ${runs}
         </w:p>
       `;
