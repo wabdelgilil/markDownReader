@@ -5,6 +5,7 @@ import { OmmlConverter } from './omml';
 import { WordDiagramShapeEngine } from './diagram.shapes';
 import { OpenXmlTemplates } from './openxml.templates';
 import { TableBuilder } from './table.builder';
+import { BiDiArbitrator } from '../../../core/bidi/arbitrator';
 
 const TEXT_NODE = 3;
 const ELEMENT_NODE = 1;
@@ -167,23 +168,19 @@ export class DocxGenerator {
 
       if (!headingText) return '';
 
+      const isHeadingRtl = BiDiArbitrator.detectDirection(headingText) === 'rtl';
+      const sz = level === '1' ? 40 : level === '2' ? 30 : 24;
+      const color = level === '1' ? '1E3A8A' : level === '2' ? '2563EB' : '334155';
+      const runs = this.createSegmentedRuns(headingText, isHeadingRtl, { bold: true, size: sz, color });
+
       return `
         <w:p>
           <w:pPr>
             <w:pStyle w:val="Heading${level}"/>
-            ${isRtl ? '<w:bidi/><w:jc w:val="right"/>' : '<w:jc w:val="left"/>'}
+            ${isHeadingRtl ? '<w:bidi/><w:jc w:val="right"/>' : '<w:jc w:val="left"/>'}
             <w:spacing w:before="${level === '1' ? '360' : '240'}" w:after="120"/>
           </w:pPr>
-          <w:r>
-            <w:rPr>
-              <w:rFonts w:ascii="Segoe UI" w:hAnsi="Segoe UI" w:cs="Traditional Arabic"/>
-              <w:b/>
-              <w:sz w:val="${level === '1' ? '40' : level === '2' ? '30' : '24'}"/>
-              <w:color w:val="${level === '1' ? '1E3A8A' : level === '2' ? '2563EB' : '334155'}"/>
-              ${isRtl ? '<w:rtl/>' : ''}
-            </w:rPr>
-            <w:t>${this.escapeXml(headingText)}</w:t>
-          </w:r>
+          ${runs}
         </w:p>
       `;
     }
@@ -293,13 +290,15 @@ export class DocxGenerator {
     }
 
     // 10. Standard Paragraphs or general containers
-    const runs = this.convertInlineRuns(el, isRtl);
+    const rawParaText = el.textContent || '';
+    const isParaRtl = BiDiArbitrator.detectDirection(rawParaText) === 'rtl';
+    const runs = this.convertInlineRuns(el, isParaRtl);
     if (!runs) return '';
 
     return `
       <w:p>
         <w:pPr>
-          ${isRtl ? '<w:bidi/><w:jc w:val="both"/>' : '<w:jc w:val="left"/>'}
+          ${isParaRtl ? '<w:bidi/><w:jc w:val="both"/>' : '<w:jc w:val="left"/>'}
           <w:spacing w:before="60" w:after="100" w:line="276" w:lineRule="auto"/>
         </w:pPr>
         ${runs}
@@ -340,6 +339,8 @@ export class DocxGenerator {
     return `
       <w:p>
         <w:pPr>
+          <w:jc w:val="left"/>
+          <w:keepLines/>
           <w:pBdr>
             <w:top w:val="single" w:sz="6" w:space="4" w:color="CBD5E1"/>
             <w:left w:val="single" w:sz="18" w:space="4" w:color="3B82F6"/>
@@ -357,7 +358,7 @@ export class DocxGenerator {
   /**
    * Renders a GitHub-style alert callout box as an elegant Word table card.
    */
-  private static renderCalloutBox(calloutEl: HTMLElement, isRtl: boolean): string {
+  private static renderCalloutBox(calloutEl: HTMLElement, _defaultRtl: boolean): string {
     const titleEl = calloutEl.querySelector('.callout-title, .font-semibold') || calloutEl.firstElementChild;
     const titleText = (titleEl?.textContent || 'ملاحظة').trim();
 
@@ -385,25 +386,29 @@ export class DocxGenerator {
     }
 
     const bodyEl = calloutEl.querySelector('.callout-body, .text-sm:last-child') || calloutEl;
+    const isCalloutRtl = BiDiArbitrator.detectDirection(bodyEl.textContent || titleText) === 'rtl';
+
     let bodyRuns = '';
     if (bodyEl !== titleEl) {
-      bodyRuns = this.convertInlineRuns(bodyEl as HTMLElement, isRtl);
+      bodyRuns = this.convertInlineRuns(bodyEl as HTMLElement, isCalloutRtl);
     }
     if (!bodyRuns) {
       const rawBody = (bodyEl.textContent || '').replace(titleText, '').trim();
-      bodyRuns = this.parseResidualMarkdown(rawBody, isRtl);
+      bodyRuns = this.parseResidualMarkdown(rawBody, isCalloutRtl);
     }
+
+    const titleRuns = this.createSegmentedRuns(titleText, isCalloutRtl, { bold: true, size: 21, color: titleColor });
 
     return `
       <w:tbl>
         <w:tblPr>
           <w:tblW w:w="5000" w:type="pct"/>
-          ${isRtl ? '<w:bidiVisual/>' : ''}
+          ${isCalloutRtl ? '<w:bidiVisual/>' : ''}
           <w:tblBorders>
             <w:top w:val="none"/>
             <w:bottom w:val="none"/>
-            <w:${isRtl ? 'right' : 'left'} w:val="single" w:sz="24" w:space="0" w:color="${borderColor}"/>
-            <w:${isRtl ? 'left' : 'right'} w:val="none"/>
+            <w:${isCalloutRtl ? 'right' : 'left'} w:val="single" w:sz="24" w:space="0" w:color="${borderColor}"/>
+            <w:${isCalloutRtl ? 'left' : 'right'} w:val="none"/>
             <w:insideH w:val="none"/>
             <w:insideV w:val="none"/>
           </w:tblBorders>
@@ -415,6 +420,9 @@ export class DocxGenerator {
           </w:tblCellMar>
         </w:tblPr>
         <w:tr>
+          <w:trPr>
+            <w:cantSplit/>
+          </w:trPr>
           <w:tc>
             <w:tcPr>
               <w:tcW w:w="0" w:type="auto"/>
@@ -422,23 +430,15 @@ export class DocxGenerator {
             </w:tcPr>
             <w:p>
               <w:pPr>
-                ${isRtl ? '<w:bidi/><w:jc w:val="right"/>' : '<w:jc w:val="left"/>'}
+                <w:keepNext/>
+                ${isCalloutRtl ? '<w:bidi/><w:jc w:val="right"/>' : '<w:jc w:val="left"/>'}
                 <w:spacing w:before="40" w:after="40"/>
               </w:pPr>
-              <w:r>
-                <w:rPr>
-                  <w:rFonts w:ascii="Segoe UI" w:hAnsi="Segoe UI" w:cs="Traditional Arabic"/>
-                  <w:b/>
-                  <w:sz w:val="21"/>
-                  <w:color w:val="${titleColor}"/>
-                  ${isRtl ? '<w:rtl/>' : ''}
-                </w:rPr>
-                <w:t>${this.escapeXml(titleText)}</w:t>
-              </w:r>
+              ${titleRuns}
             </w:p>
             <w:p>
               <w:pPr>
-                ${isRtl ? '<w:bidi/><w:jc w:val="both"/>' : '<w:jc w:val="left"/>'}
+                ${isCalloutRtl ? '<w:bidi/><w:jc w:val="both"/>' : '<w:jc w:val="left"/>'}
                 <w:spacing w:before="40" w:after="60"/>
               </w:pPr>
               ${bodyRuns}
@@ -449,27 +449,29 @@ export class DocxGenerator {
     `;
   }
 
-  private static convertList(listEl: HTMLElement, isOrdered: boolean, isRtl: boolean): string {
+  private static convertList(listEl: HTMLElement, isOrdered: boolean, _defaultRtl: boolean): string {
     const items = Array.from(listEl.querySelectorAll(':scope > li'));
     let xml = '';
 
     items.forEach((li, idx) => {
+      const liText = li.textContent || '';
+      const isLiRtl = BiDiArbitrator.detectDirection(liText) === 'rtl';
       const prefix = isOrdered ? `${idx + 1}.` : '•';
-      const runs = this.convertInlineRuns(li as HTMLElement, isRtl);
+      const runs = this.convertInlineRuns(li as HTMLElement, isLiRtl);
 
       xml += `
         <w:p>
           <w:pPr>
-            ${isRtl ? '<w:bidi/><w:jc w:val="right"/>' : '<w:jc w:val="left"/>'}
+            ${isLiRtl ? '<w:bidi/><w:jc w:val="right"/>' : '<w:jc w:val="left"/>'}
             <w:spacing w:before="50" w:after="50"/>
-            <w:ind w:${isRtl ? 'right' : 'left'}="480" w:hanging="240"/>
+            <w:ind w:${isLiRtl ? 'right' : 'left'}="480" w:hanging="240"/>
           </w:pPr>
           <w:r>
             <w:rPr>
               <w:rFonts w:ascii="Segoe UI" w:hAnsi="Segoe UI" w:cs="Traditional Arabic"/>
               <w:b/>
               <w:color w:val="3B82F6"/>
-              ${isRtl ? '<w:rtl/>' : ''}
+              ${isLiRtl ? '<w:rtl/>' : ''}
             </w:rPr>
             <w:t xml:space="preserve">${prefix}  </w:t>
           </w:r>
@@ -595,6 +597,72 @@ export class DocxGenerator {
     return xml;
   }
 
+  private static createSegmentedRuns(
+    text: string,
+    isParentRtl: boolean,
+    style: { bold?: boolean; italic?: boolean; size?: number; color?: string }
+  ): string {
+    if (!text) return '';
+
+    const ARABIC_RANGE = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
+    const parenRegex = /(\([^\)]+\)|\[[^\]]+\]|\S+|\s+)/g;
+    const tokens = text.match(parenRegex) || [text];
+
+    const segments: { text: string; isRtl: boolean }[] = [];
+    let currentSegment = '';
+    let currentIsRtl: boolean | null = null;
+
+    for (const token of tokens) {
+      const hasArabic = ARABIC_RANGE.test(token);
+      const hasLatin = /[a-zA-Z]/.test(token);
+      let tokenIsRtl: boolean = currentIsRtl !== null ? currentIsRtl : isParentRtl;
+
+      if (hasArabic) {
+        tokenIsRtl = true;
+      } else if (hasLatin) {
+        tokenIsRtl = false;
+      }
+
+      if (currentIsRtl === null) {
+        currentIsRtl = tokenIsRtl;
+        currentSegment = token;
+      } else if (currentIsRtl === tokenIsRtl) {
+        currentSegment += token;
+      } else {
+        segments.push({ text: currentSegment, isRtl: currentIsRtl });
+        currentSegment = token;
+        currentIsRtl = tokenIsRtl;
+      }
+    }
+
+    if (currentSegment) {
+      segments.push({ text: currentSegment, isRtl: currentIsRtl ?? isParentRtl });
+    }
+
+    let runs = '';
+    const szVal = style.size ? ` w:val="${style.size}"` : '';
+    const colorVal = style.color ? ` w:val="${style.color}"` : '';
+
+    for (const seg of segments) {
+      const segText = seg.text;
+      if (!segText) continue;
+
+      runs += `<w:r>
+        <w:rPr>
+          <w:rFonts w:ascii="Segoe UI" w:hAnsi="Segoe UI" w:cs="Traditional Arabic"/>
+          ${style.bold ? '<w:b/>' : ''}
+          ${style.italic ? '<w:i/>' : ''}
+          ${szVal ? `<w:sz${szVal}/>` : ''}
+          ${colorVal ? `<w:color${colorVal}/>` : ''}
+          ${seg.isRtl ? '<w:rtl/>' : ''}
+        </w:rPr>
+        <w:t xml:space="preserve">${this.escapeXml(segText)}</w:t>
+      </w:r>`;
+    }
+
+    return runs;
+  }
+
   private static createParagraph(content: string, isRtl: boolean): string {
     return `
       <w:p>
@@ -607,7 +675,11 @@ export class DocxGenerator {
     `;
   }
 
-  private static createRun(text: string, options: { bold?: boolean; italic?: boolean }, isRtl: boolean): string {
+  private static createRun(text: string, options: { bold?: boolean; italic?: boolean }, isParentRtl: boolean): string {
+    const hasArabic = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/.test(text);
+    const hasLatin = /[a-zA-Z]/.test(text);
+    const isRunRtl = hasArabic ? true : hasLatin ? false : isParentRtl;
+
     return `
       <w:r>
         <w:rPr>
@@ -616,7 +688,7 @@ export class DocxGenerator {
           ${options.italic ? '<w:i/>' : ''}
           <w:sz w:val="22"/>
           <w:color w:val="1E293B"/>
-          ${isRtl ? '<w:rtl/>' : ''}
+          ${isRunRtl ? '<w:rtl/>' : ''}
         </w:rPr>
         <w:t xml:space="preserve">${this.escapeXml(text)}</w:t>
       </w:r>

@@ -43,12 +43,7 @@ export class WordDiagramShapeEngine {
       return this.renderFlowchartAsShapes(trimmed);
     }
 
-    // Check if it is a mindmap
-    if (/^mindmap/i.test(trimmed)) {
-      return this.renderMindmapAsShapes(trimmed);
-    }
-
-    // Fallback: structured callout block for sequence / gitgraph / gantt
+    // Mindmap and other diagrams render as clean, structured, non-overlapping callout blocks
     return this.renderStructuredCalloutBlock(trimmed);
   }
 
@@ -271,103 +266,18 @@ export class WordDiagramShapeEngine {
 
     vmlContent += `</v:group>`;
 
+    const canvasHeightPt = Math.round((canvasHeight / canvasWidth) * 440);
     return `<w:p>
       <w:pPr>
         <w:jc w:val="center"/>
-        <w:spacing w:before="240" w:after="240"/>
+        <w:spacing w:before="180" w:after="${Math.round(canvasHeightPt * 20) + 120}"/>
+        <w:keepLines/>
       </w:pPr>
       <w:r>
         <w:pict>
           ${vmlContent}
         </w:pict>
       </w:r>
-    </w:p>`;
-  }
-
-  /**
-   * Mindmap code to native hierarchical tree shapes in Word.
-   */
-  private static renderMindmapAsShapes(code: string): string {
-    const lines = code.split('\n').filter((l) => l.trim() && !l.trim().startsWith('%%') && !l.trim().startsWith('mindmap'));
-    if (lines.length === 0) return '';
-
-    const rootLine = lines[0].trim().replace(/^root\s*\((.*?)\)|^root\[(.*?)\]|^\((.*?)\)|^\[(.*?)\]|^root/i, '$1$2$3$4');
-    const rootText = rootLine || 'الرئيسية';
-
-    const childNodes: string[] = [];
-    for (let i = 1; i < lines.length; i++) {
-      const clean = lines[i].replace(/^\s*[-+*]?\s*[\(\[]?|[\)\]]?\s*$/g, '').trim();
-      if (clean) childNodes.push(clean);
-    }
-
-    const canvasWidth = 700;
-    const canvasHeight = Math.max(200 + childNodes.length * 70, 360);
-    const rootX = 60;
-    const rootY = Math.round(canvasHeight / 2 - 35);
-
-    const groupId = this.nextId('vml_grp');
-    const mindmapHeightPt = Math.round((canvasHeight / canvasWidth) * 480);
-    let vml = `<v:group id="${groupId}" style="width:480pt;height:${mindmapHeightPt}pt;" coordorigin="0 0" coordsize="${canvasWidth} ${canvasHeight}">`;
-
-    // Root Node
-    const rootId = this.nextId('vml_root');
-    vml += `<v:roundrect id="${rootId}" style="position:absolute;left:${rootX};top:${rootY};width:160;height:70" arcsize="0.3" fillcolor="#4f46e5" strokecolor="#3730a3" strokeweight="2pt">
-      <v:shadow on="t" color="#cbd5e1" offset="2pt,2pt"/>
-      <v:textbox inset="6pt,6pt,6pt,6pt">
-        <w:txbxContent>
-          <w:p>
-            <w:pPr><w:jc w:val="center"/></w:pPr>
-            <w:r>
-              <w:rPr>
-                <w:rFonts w:ascii="Segoe UI" w:hAnsi="Segoe UI" w:cs="Traditional Arabic"/>
-                <w:b/><w:sz w:val="22"/><w:color w:val="FFFFFF"/>
-              </w:rPr>
-              <w:t>${this.escapeXml(rootText)}</w:t>
-            </w:r>
-          </w:p>
-        </w:txbxContent>
-      </v:textbox>
-    </v:roundrect>`;
-
-    // Children nodes
-    const startY = 40;
-    const stepY = childNodes.length > 1 ? (canvasHeight - 120) / (childNodes.length - 1) : 0;
-    const childX = 350;
-
-    childNodes.forEach((childText, idx) => {
-      const childY = Math.round(startY + idx * stepY);
-      const lineId = this.nextId('vml_line');
-      const childId = this.nextId('vml_node');
-
-      // Connecting line
-      vml += `<v:line id="${lineId}" from="${rootX + 160},${rootY + 35}" to="${childX},${childY + 25}" strokecolor="#818cf8" strokeweight="2pt">
-        <v:stroke endarrow="classic" endarrowwidth="medium"/>
-      </v:line>`;
-
-      // Child block
-      vml += `<v:roundrect id="${childId}" style="position:absolute;left:${childX};top:${childY};width:180;height:50" arcsize="0.2" fillcolor="#0d9488" strokecolor="#0f766e" strokeweight="1.5pt">
-        <v:textbox inset="4pt,4pt,4pt,4pt">
-          <w:txbxContent>
-            <w:p>
-              <w:pPr><w:jc w:val="center"/></w:pPr>
-              <w:r>
-                <w:rPr>
-                  <w:rFonts w:ascii="Segoe UI" w:hAnsi="Segoe UI" w:cs="Traditional Arabic"/>
-                  <w:b/><w:sz w:val="18"/><w:color w:val="FFFFFF"/>
-                </w:rPr>
-                <w:t>${this.escapeXml(childText)}</w:t>
-              </w:r>
-            </w:p>
-          </w:txbxContent>
-        </v:textbox>
-      </v:roundrect>`;
-    });
-
-    vml += `</v:group>`;
-
-    return `<w:p>
-      <w:pPr><w:jc w:val="center"/><w:spacing w:before="240" w:after="240"/></w:pPr>
-      <w:r><w:pict>${vml}</w:pict></w:r>
     </w:p>`;
   }
 
@@ -439,7 +349,12 @@ export class WordDiagramShapeEngine {
 
   private static renderStructuredCalloutBlock(code: string): string {
     const cleanLines = code.split('\n').filter((l) => l.trim());
-    const headerTitle = cleanLines[0] || 'Diagram Structure';
+    let headerTitle = cleanLines[0] || 'Diagram Structure';
+    if (/^sequenceDiagram/i.test(headerTitle)) headerTitle = 'مخطط تسلسلي زمني للعمليات (Sequence Diagram)';
+    else if (/^erDiagram/i.test(headerTitle)) headerTitle = 'مخطط العلاقات لقواعد البيانات (Entity-Relationship ER)';
+    else if (/^gitGraph/i.test(headerTitle)) headerTitle = 'شجرة الفروع وتاريخ الإصدارات (Git Graph)';
+    else if (/^gantt/i.test(headerTitle)) headerTitle = 'خطة المهام الزمنية ومراحل المشروع (Gantt Milestone Roadmap)';
+    else if (/^mindmap/i.test(headerTitle)) headerTitle = 'الخريطة الذهنية المعمارية (Mindmap Architecture)';
 
     const bodyLines = cleanLines.slice(1);
     let codeRuns = '';

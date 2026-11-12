@@ -291,9 +291,16 @@ export class PdfExporter extends BaseExporter implements IExporter {
       text-decoration: underline;
     }
     .heading-anchor,
-    .copy-code-btn {
+    .copy-code-btn,
+    .diagram-action-btn,
+    .diagram-toolbar,
+    .diagram-controls,
+    [data-diagram-toolbar],
+    .mermaid-controls {
       display: none !important;
     }
+    [dir="ltr"] { direction: ltr !important; text-align: left !important; }
+    [dir="rtl"] { direction: rtl !important; text-align: right !important; }
     .notion-code-card {
       background: #f8fafc;
       border: 1pt solid #e2e8f0;
@@ -319,6 +326,16 @@ export class PdfExporter extends BaseExporter implements IExporter {
       border: none;
       border-radius: 0;
     }
+    /* Syntax Highlighting Colors for PDF Print */
+    .token.comment, .token.prolog, .token.doctype, .token.cdata { color: #6a737d !important; font-style: italic; }
+    .token.punctuation { color: #24292e !important; }
+    .token.property, .token.tag, .token.boolean, .token.number, .token.constant, .token.symbol { color: #005cc5 !important; }
+    .token.selector, .token.attr-name, .token.string, .token.char, .token.builtin { color: #032f62 !important; }
+    .token.operator, .token.entity, .token.url, .language-css .token.string, .style .token.string { color: #d73a49 !important; }
+    .token.atrule, .token.attr-value, .token.keyword { color: #d73a49 !important; font-weight: 600; }
+    .token.function, .token.class-name { color: #6f42c1 !important; }
+    .token.regex, .token.important, .token.variable { color: #e36209 !important; }
+    /* Callout Alert Variants */
     .callout-block {
       margin: 12pt 0;
       padding: 10pt 14pt;
@@ -328,6 +345,11 @@ export class PdfExporter extends BaseExporter implements IExporter {
       break-inside: avoid;
       page-break-inside: avoid;
     }
+    .callout-info, .callout-note { background: #eff6ff !important; border-inline-start-color: #3b82f6 !important; }
+    .callout-tip { background: #ecfdf5 !important; border-inline-start-color: #10b981 !important; }
+    .callout-important { background: #f5f3ff !important; border-inline-start-color: #8b5cf6 !important; }
+    .callout-warning { background: #fffbeb !important; border-inline-start-color: #f59e0b !important; }
+    .callout-caution, .callout-danger { background: #fef2f2 !important; border-inline-start-color: #ef4444 !important; }
   </style>
 </head>
 <body>
