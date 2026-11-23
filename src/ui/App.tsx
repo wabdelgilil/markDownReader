@@ -13,6 +13,7 @@ import { DomHighlighter } from '../services/highlighter.dom';
 import { annotationStore } from '../services/annotation.store';
 import { Annotation } from '../core/types/annotation';
 import { ThemeService } from '../services/theme.service';
+import { EmbedBridgeService } from '../services/embed-bridge.service';
 import { I18nService } from '../services/i18n.service';
 import { FullscreenService } from '../services/fullscreen.service';
 import { documentStore } from '../services/document.store';
@@ -55,6 +56,14 @@ export const App: React.FC = () => {
       setActiveTab(documentStore.getActiveTab());
     });
     return unsubscribe;
+  }, []);
+
+  // Attach postMessage embed bridge for external governance portals
+  useEffect(() => {
+    return EmbedBridgeService.attach((nextTheme) => {
+      setTheme(nextTheme);
+      ThemeService.setTheme(nextTheme);
+    });
   }, []);
 
   // Sync annotations when activeTab changes or annotation store updates
