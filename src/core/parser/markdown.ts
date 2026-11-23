@@ -97,8 +97,58 @@ export class MarkdownPipeline {
         },
         paragraph(this: { parser: { parseInline: (tokens: Tokens.Generic[]) => string } }, { tokens }: Tokens.Paragraph): string {
           const text = this.parser.parseInline(tokens);
-          const dir = BiDiArbitrator.detectDirection(text);
+          const dir = BiDiArbitrator.detectDirection(text.replace(/<[^>]*>/g, ''));
           return `<p class="markdown-paragraph my-3 leading-relaxed text-theme-text" dir="${dir}">${text}</p>`;
+        },
+        list(this: { listitem: (item: Tokens.ListItem) => string }, token: Tokens.List): string {
+          const body = token.items.map((item) => this.listitem(item)).join('');
+          const plain = body.replace(/<[^>]*>/g, '');
+          const dir = BiDiArbitrator.detectDirection(plain);
+          const tag = token.ordered ? 'ol' : 'ul';
+          const startAttr = token.ordered && token.start !== 1 ? ` start="${token.start}"` : '';
+          return `<${tag}${startAttr} dir="${dir}">${body}</${tag}>\n`;
+        },
+        listitem(this: { parser: { parse: (tokens: Tokens.Generic[]) => string; parseInline: (tokens: Tokens.Generic[]) => string } }, item: Tokens.ListItem): string {
+          let itemBody = this.parser.parse(item.tokens);
+          if (!item.loose) {
+            itemBody = itemBody.replace(/^<p[^>]*>([\s\S]*?)<\/p>\n?/, '$1');
+          }
+          const plain = itemBody.replace(/<[^>]*>/g, '');
+          const dir = BiDiArbitrator.detectDirection(plain);
+          if (item.task) {
+            const checked = item.checked ? ' checked=""' : '';
+            return `<li class="task-list-item" dir="${dir}"><input type="checkbox" disabled=""${checked} />${itemBody}</li>\n`;
+          }
+          return `<li dir="${dir}">${itemBody}</li>\n`;
+        },
+        blockquote(this: { parser: { parse: (tokens: Tokens.Generic[]) => string } }, { tokens }: Tokens.Blockquote): string {
+          const body = this.parser.parse(tokens);
+          const dir = BiDiArbitrator.detectDirection(body.replace(/<[^>]*>/g, ''));
+          return `<blockquote dir="${dir}">${body}</blockquote>\n`;
+        },
+        table(this: { parser: { parseInline: (tokens: Tokens.Generic[]) => string } }, token: Tokens.Table): string {
+          const headerCells = token.header
+            .map((cell) => {
+              const content = this.parser.parseInline(cell.tokens);
+              const align = cell.align ? ` align="${cell.align}"` : '';
+              return `<th${align}>${content}</th>`;
+            })
+            .join('');
+          const bodyRows = token.rows
+            .map((row) => {
+              const cells = row
+                .map((cell) => {
+                  const content = this.parser.parseInline(cell.tokens);
+                  const align = cell.align ? ` align="${cell.align}"` : '';
+                  return `<td${align}>${content}</td>`;
+                })
+                .join('');
+              return `<tr>${cells}</tr>`;
+            })
+            .join('');
+          const plain = (headerCells + bodyRows).replace(/<[^>]*>/g, '');
+          const dir = BiDiArbitrator.detectDirection(plain);
+          return `<table dir="${dir}"><thead><tr>${headerCells}</tr></thead><tbody>${bodyRows}</tbody></table>\n`;
         },
         codespan({ text }: Tokens.Codespan): string {
           return `<code class="font-mono text-xs md:text-sm px-1.5 py-0.5 rounded bg-theme-surface text-theme-accent border border-theme-border/60" dir="ltr"><bdi dir="ltr">${text}</bdi></code>`;
