@@ -20,9 +20,18 @@ import { documentStore } from '../services/document.store';
 import { ExportDispatcher, ExportFormat } from '../services/exporters';
 import { SAMPLE_MARKDOWN } from '../core/sample';
 import { ReadingTheme } from '../core/types';
-import { ListTree } from 'lucide-react';
+import { ListTree, Sun, Moon, Maximize2 } from 'lucide-react';
+
+const isEmbedMode = (): boolean => {
+  try {
+    return new URLSearchParams(window.location.search).get('embed') === '1';
+  } catch {
+    return false;
+  }
+};
 
 export const App: React.FC = () => {
+  const [embedMode] = useState<boolean>(isEmbedMode);
   const [theme, setTheme] = useState<ReadingTheme>('dark');
   const [activeTab, setActiveTab] = useState(documentStore.getActiveTab());
   const [showPresentation, setShowPresentation] = useState(false);
@@ -33,6 +42,7 @@ export const App: React.FC = () => {
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
   const [externalEditAnnotation, setExternalEditAnnotation] = useState<Annotation | null>(null);
   const [showOutline, setShowOutline] = useState<boolean>(() => {
+    if (isEmbedMode()) return false;
     try {
       return localStorage.getItem('markdown_reader_show_outline') !== 'false';
     } catch {
@@ -180,24 +190,57 @@ export const App: React.FC = () => {
 
   return (
     <div className="h-screen max-h-screen overflow-hidden flex flex-col bg-theme-bg text-theme-text">
-      {/* Top Navbar with Multi-Tab Strip */}
-      <Navbar
-        currentTheme={theme}
-        onThemeChange={handleThemeChange}
-        onTogglePresentation={() => setShowPresentation(true)}
-        onToggleDiagnostics={() => setShowDiagnostics((prev) => !prev)}
-        onExportFormat={handleExportFormat}
-        onOpenDiagramThemes={() => setShowDiagramThemes(true)}
-        onToggleWorkspace={() => setShowWorkspaceTree((prev) => !prev)}
-        onToggleOutline={handleToggleOutline}
-        onToggleAnnotations={() => setShowAnnotations((prev) => !prev)}
-        hasOpenTabs={activeTab !== null}
-        hasOpenWorkspace={showWorkspaceTree}
-        hasOpenOutline={showOutline}
-        hasOpenAnnotations={showAnnotations}
-        headingsCount={activeTab?.parsed?.headings.length}
-        annotationCount={annotations.length}
-      />
+      {/* Top Navbar (Full App) OR Minimal 3-Button Reader Bar (?embed=1) */}
+      {embedMode ? (
+        <div className="flex items-center justify-end gap-2 px-3 py-1.5 bg-theme-surface border-b border-theme-border shrink-0">
+          <button
+            onClick={handleToggleOutline}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-medium transition-colors cursor-pointer ${
+              showOutline
+                ? 'bg-theme-accent/15 border-theme-accent text-theme-accent'
+                : 'bg-theme-bg border-theme-border text-theme-text hover:border-theme-accent'
+            }`}
+            title={I18nService.getLocale() === 'ar' ? 'فهرس المحتويات' : 'Table of Contents'}
+          >
+            <ListTree className="w-3.5 h-3.5" />
+            <span>{I18nService.getLocale() === 'ar' ? 'الفهرس' : 'Outline'}</span>
+          </button>
+          <button
+            onClick={() => handleThemeChange(theme === 'dark' ? 'light' : 'dark')}
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-theme-bg border border-theme-border hover:border-theme-accent text-xs font-medium text-theme-text transition-colors cursor-pointer"
+            title={I18nService.getLocale() === 'ar' ? 'تبديل الوضع الليلي/النهاري' : 'Toggle Light/Dark Theme'}
+          >
+            {theme === 'dark' ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
+            <span>{theme === 'dark' ? (I18nService.getLocale() === 'ar' ? 'نهاري' : 'Light') : (I18nService.getLocale() === 'ar' ? 'ليلي' : 'Dark')}</span>
+          </button>
+          <button
+            onClick={() => FullscreenService.toggleFullscreen()}
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-theme-bg border border-theme-border hover:border-theme-accent text-xs font-medium text-theme-text transition-colors cursor-pointer"
+            title={I18nService.getLocale() === 'ar' ? 'تكبير الشاشة' : 'Fullscreen'}
+          >
+            <Maximize2 className="w-3.5 h-3.5" />
+            <span>{I18nService.getLocale() === 'ar' ? 'تكبير' : 'Fullscreen'}</span>
+          </button>
+        </div>
+      ) : (
+        <Navbar
+          currentTheme={theme}
+          onThemeChange={handleThemeChange}
+          onTogglePresentation={() => setShowPresentation(true)}
+          onToggleDiagnostics={() => setShowDiagnostics((prev) => !prev)}
+          onExportFormat={handleExportFormat}
+          onOpenDiagramThemes={() => setShowDiagramThemes(true)}
+          onToggleWorkspace={() => setShowWorkspaceTree((prev) => !prev)}
+          onToggleOutline={handleToggleOutline}
+          onToggleAnnotations={() => setShowAnnotations((prev) => !prev)}
+          hasOpenTabs={activeTab !== null}
+          hasOpenWorkspace={showWorkspaceTree}
+          hasOpenOutline={showOutline}
+          hasOpenAnnotations={showAnnotations}
+          headingsCount={activeTab?.parsed?.headings.length}
+          annotationCount={annotations.length}
+        />
+      )}
 
       {/* Main Workspace Body */}
       <div className="flex-1 flex overflow-hidden relative">
